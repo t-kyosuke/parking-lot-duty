@@ -111,19 +111,21 @@ const AdminView: React.FC = () => {
     setRefreshKey(k => k + 1);
   }, []);
 
-  // CSVからスケジュール情報を生成
+  // CSVからスケジュール情報を生成（選択中の月のみ）
   const csvSchedule = useMemo(() => {
     if (!csvData) return null;
-    return csvData.days.map(d => {
-      const existing = currentSchedule.find(s => s.date === d.date);
-      return {
-        date: d.date,
-        dayOfWeek: d.dayOfWeek,
-        type: (d.isMatch ? 'match' : d.isCamp ? 'camp' : d.dayOfWeek === '土' ? 'off' : existing?.type || 'practice') as DayType,
-        practiceTime: d.practiceTime || existing?.practiceTime || '',
-      };
-    });
-  }, [csvData, currentSchedule]);
+    return csvData.days
+      .filter(d => parseInt(d.date.split('/')[0], 10) === monthNum)
+      .map(d => {
+        const existing = currentSchedule.find(s => s.date === d.date);
+        return {
+          date: d.date,
+          dayOfWeek: d.dayOfWeek,
+          type: (d.isMatch ? 'match' : d.isCamp ? 'camp' : d.dayOfWeek === '土' ? 'off' : existing?.type || 'practice') as DayType,
+          practiceTime: d.practiceTime || existing?.practiceTime || '',
+        };
+      });
+  }, [csvData, currentSchedule, monthNum]);
 
   // CSVから新しく出欠確認中の場合は古い保存データを使わない（ボタン表示バグ防止）
   const displayAssignments = confirmedAttendance ? assignments : (assignments || savedData);
