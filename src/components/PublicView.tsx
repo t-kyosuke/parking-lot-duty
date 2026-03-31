@@ -129,6 +129,11 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
         )}
       </div>
 
+      {/* お知らせ */}
+      <div className="public-notice">
+        今月の駐車場当番は上記の通りです。役割を終えたコーチは、黄色うちわ&カゴセットを次の担当の方にお渡しください！※空気入れの充電もお願いいたします。
+      </div>
+
       {/* 管理者ログインボタン */}
       <div className="admin-login-area">
         <button className="admin-login-btn" onClick={onAdminClick}>

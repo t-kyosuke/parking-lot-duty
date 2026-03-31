@@ -455,6 +455,19 @@ body {
   margin-top: 8px;
 }
 
+/* Public Notice */
+.public-notice {
+  margin: 16px auto 0;
+  max-width: 600px;
+  padding: 16px 20px;
+  background: #fff9e6;
+  border-left: 4px solid #F0DC00;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: #333;
+}
+
 /* Admin Login Area */
 .admin-login-area {
   text-align: center;
