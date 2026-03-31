@@ -69,36 +69,21 @@ function normalizeAttendance(value: string): AttendanceStatus {
 }
 
 /**
- * バイナリデータがShift_JISかどうかを判定する簡易チェック
- */
-function isShiftJIS(data: Uint8Array): boolean {
-  for (let i = 0; i < data.length; i++) {
-    const byte = data[i];
-    if (byte >= 0x81 && byte <= 0x9F) return true;
-    if (byte >= 0xE0 && byte <= 0xFC) return true;
-  }
-  return false;
-}
-
-/**
  * 調整さんCSVをパースする
- * 
- * フォーマット:
- * - 先頭2行: メタデータ（スキップ）
- * - 3行目: ヘッダー（「日程,コーチ名1,コーチ名2,...」）
- * - 4行目以降: データ行
- * - 最終行: 「コメント」行（スキップ）
+ * UTF-8で読み込みを試みて、失敗した場合はShift_JISにフォールバックする
  */
 export async function parseCsv(file: File): Promise<ParsedCsvData> {
   const buffer = await file.arrayBuffer();
   const uint8 = new Uint8Array(buffer);
 
   let text: string;
-  if (isShiftJIS(uint8)) {
-    const decoder = new TextDecoder('shift_jis');
+  try {
+    // まずUTF-8（strict）で試みる。不正バイトがあれば例外が出る
+    const decoder = new TextDecoder('utf-8', { fatal: true });
     text = decoder.decode(uint8);
-  } else {
-    const decoder = new TextDecoder('utf-8');
+  } catch {
+    // UTF-8として読めなかった場合はShift_JISとして読む
+    const decoder = new TextDecoder('shift_jis');
     text = decoder.decode(uint8);
   }
 
