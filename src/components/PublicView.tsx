@@ -43,6 +43,15 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
 
   return (
     <div className="public-view">
+      {/* ヒーローバナー */}
+      <div className="hero-banner">
+        <div className="hero-overlay" />
+        <div className="hero-content">
+          <p className="hero-motto">勇気・希望・団結</p>
+          <h2 className="hero-title">SUITA RUGBY SCHOOL</h2>
+        </div>
+      </div>
+
       {/* 月選択 */}
       <div className="month-selector">
         <button className="month-nav-btn" onClick={handlePrevMonth}>

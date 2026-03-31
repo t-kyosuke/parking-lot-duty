@@ -165,6 +165,59 @@ body {
 
 .public-view { padding-bottom: 56px; }
 
+/* ── Hero Banner ── */
+.hero-banner {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 0;
+  background-image: url('/parking-lot-duty/hero.jpg');
+  background-size: cover;
+  background-position: center 18%;
+  box-shadow: var(--shadow-md);
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(0,0,0,0.72) 0%,
+    rgba(0,0,0,0.30) 55%,
+    rgba(0,0,0,0.10) 100%
+  );
+}
+
+.hero-content {
+  position: absolute;
+  bottom: 20px;
+  left: 22px;
+  z-index: 1;
+}
+
+.hero-motto {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--yellow);
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  font-weight: 900;
+  color: #FFFFFF;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.1;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+}
+
 /* ── Month Selector ── */
 .month-selector {
   display: flex;
@@ -1243,6 +1296,9 @@ body {
 
   .header-title h1 { font-size: 1.2rem; }
   .header-logo     { height: 42px; }
+
+  .hero-banner  { height: 170px; }
+  .hero-title   { font-size: 1.25rem; }
 
   .month-name { font-size: 4rem; }
 
