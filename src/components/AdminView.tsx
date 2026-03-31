@@ -5,7 +5,7 @@ import { assignParking } from '../lib/assignParking';
 import type { ParsedCsvData } from '../lib/parseCsv';
 import {
   getMonthlyData, saveMonthlyData,
-  getPointer, savePointer,
+  getPointerState, savePointerState,
   getCumulativeCounts, recalculateCumulativeCounts,
   getSchedule, saveSchedule,
 } from '../lib/storage';
@@ -74,8 +74,10 @@ const AdminView: React.FC = () => {
       .filter(d => d.type === 'practice' || d.type === 'special')
       .map(d => ({ date: d.date, dayOfWeek: d.dayOfWeek, practiceTime: d.practiceTime }));
 
-    const pointer = getPointer();
-    const { results, nextPointer } = assignParking(practiceDays, confirmedAttendance, pointer, COACH_ORDER);
+    const { owed, searchFrom } = getPointerState();
+    const { results, nextPointer, nextSearchFrom } = assignParking(
+      practiceDays, confirmedAttendance, owed, COACH_ORDER, searchFrom
+    );
 
     const monthData: MonthlyData = {
       month: selectedMonth,
@@ -91,7 +93,7 @@ const AdminView: React.FC = () => {
     };
 
     saveMonthlyData(selectedMonth, monthData);
-    savePointer(nextPointer);
+    savePointerState(nextPointer, nextSearchFrom);
     recalculateCumulativeCounts();
     setAssignments(monthData);
     setRefreshKey(k => k + 1);
@@ -130,7 +132,7 @@ const AdminView: React.FC = () => {
   // CSVから新しく出欠確認中の場合は古い保存データを使わない（ボタン表示バグ防止）
   const displayAssignments = confirmedAttendance ? assignments : (assignments || savedData);
   const counts = getCumulativeCounts();
-  const pointer = getPointer();
+  const pointer = getPointerState().owed;
 
   return (
     <div className="admin-view">

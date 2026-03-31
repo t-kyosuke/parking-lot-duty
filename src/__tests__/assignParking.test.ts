@@ -80,21 +80,23 @@ describe('assignParking', () => {
   ];
 
   it('確定版テストデータで期待出力と完全一致すること', () => {
-    const { results, nextPointer } = assignParking(practiceDays, testAttendance, 0);
+    const { results, nextPointer, nextSearchFrom } = assignParking(practiceDays, testAttendance, 0);
 
     // 期待される出力
+    // 2ポインタ方式：borrowed(借り越し)中でも代役は毎回異なる人になる
+    // 4/29以降、濱田が借り越し状態になるが代役は前里→松木→大串と順番に回る
     const expected = [
-      { date: '4/5', coach: '塚原匡祐' },
-      { date: '4/12', coach: '国沢剛' },
-      { date: '4/19', coach: '岸下和樹' },
-      { date: '4/29', coach: '堀本和幸' },
-      { date: '5/3', coach: '前里元樹' },   // 濱田×のためスキップ
-      { date: '5/5', coach: '松木正和' },   // 林×のためスキップ
-      { date: '5/6', coach: '大串洋尚' },   // 橋戸△、河井△のためスキップ
-      { date: '5/10', coach: '塚原匡祐' },
-      { date: '5/17', coach: '国沢剛' },   // 塚原×のためスキップ
-      { date: '5/24', coach: '岸下和樹' },
-      { date: '5/31', coach: '堀本和幸' },
+      { date: '4/5',  coach: '塚原匡祐' },  // 直接
+      { date: '4/12', coach: '国沢剛' },    // 直接
+      { date: '4/19', coach: '岸下和樹' },  // 直接
+      { date: '4/29', coach: '堀本和幸' },  // 直接 → 次は濱田
+      { date: '5/3',  coach: '前里元樹' },  // 濱田×→前里が代役（searchFrom→林へ）
+      { date: '5/5',  coach: '松木正和' },  // 濱田×→林×→松木が代役（searchFrom→橋戸へ）
+      { date: '5/6',  coach: '大串洋尚' },  // 濱田×→橋戸△・河井△→大串が代役（searchFrom→塚原へ）
+      { date: '5/10', coach: '濱田広宣' },  // 濱田◯→借り越し解消（owed→塚原へ）
+      { date: '5/17', coach: '国沢剛' },    // 塚原×→国沢が代役（searchFrom→岸下へ）
+      { date: '5/24', coach: '塚原匡祐' },  // 塚原◯→借り越し解消（owed→岸下へ）
+      { date: '5/31', coach: '岸下和樹' },  // 直接
     ];
 
     expect(results.length).toBe(expected.length);
@@ -104,9 +106,10 @@ describe('assignParking', () => {
       expect(results[i].coach).toBe(expected[i].coach);
     }
 
-    // 次回開始位置: 堀本の次 = 濱田（インデックス4）
-    expect(nextPointer).toBe(4); // 濱田のインデックス
-    expect(COACH_ORDER[nextPointer]).toBe('濱田広宣');
+    // 次回：堀本から（インデックス3）
+    expect(nextPointer).toBe(3);
+    expect(COACH_ORDER[nextPointer]).toBe('堀本和幸');
+    expect(nextSearchFrom).toBe(3);
   });
 
   it('全員が×の日は該当者なしになること', () => {

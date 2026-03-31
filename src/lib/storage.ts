@@ -102,14 +102,31 @@ export function recalculateCumulativeCounts(): Record<string, number> {
   return counts;
 }
 
-// ── ポインタ ──
+// ── ポインタ（2ポインタ方式）──
+
+export interface PointerState {
+  owed: number;       // 次回先頭候補（借り越し中の人）
+  searchFrom: number; // 代役を探す開始位置
+}
+
+export function getPointerState(): PointerState {
+  const stored = getItem<number | PointerState>(STORAGE_KEYS.POINTER, 0);
+  // 旧形式（number）との後方互換
+  if (typeof stored === 'number') return { owed: stored, searchFrom: stored };
+  return stored;
+}
 
 export function getPointer(): number {
-  return getItem<number>(STORAGE_KEYS.POINTER, 0);
+  return getPointerState().owed;
+}
+
+export function savePointerState(owed: number, searchFrom: number): void {
+  setItem(STORAGE_KEYS.POINTER, { owed, searchFrom });
 }
 
 export function savePointer(pointer: number): void {
-  setItem(STORAGE_KEYS.POINTER, pointer);
+  // 設定画面から手動変更した場合は両方同じ値にリセット
+  savePointerState(pointer, pointer);
 }
 
 // ── 変更履歴 ──
