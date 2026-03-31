@@ -3,7 +3,12 @@ import { MONTHS, COACH_LAST_NAMES, DAY_TYPE_LABELS, DEFAULT_SCHEDULE } from '../
 import type { DayType } from '../lib/constants';
 import { getAllMonthlyData, getSchedule } from '../lib/storage';
 
+const HERO_IMAGES = Array.from({ length: 14 }, (_, i) => `/parking-lot-duty/hero-${i + 1}.jpg`);
+
 const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) => {
+  const [heroImage] = React.useState<string>(
+    () => HERO_IMAGES[Math.floor(Math.random() * HERO_IMAGES.length)]
+  );
   // 現在の月を年度ベースで判定
   const now = new Date();
   const currentMonthNum = now.getMonth() + 1; // 1-12
@@ -44,7 +49,7 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
   return (
     <div className="public-view">
       {/* ヒーローバナー */}
-      <div className="hero-banner">
+      <div className="hero-banner" style={{ backgroundImage: `url(${heroImage})` }}>
         <div className="hero-overlay" />
         <div className="hero-content">
           <p className="hero-motto">勇気・希望・団結</p>

@@ -173,9 +173,8 @@ body {
   border-radius: var(--radius-md);
   overflow: hidden;
   margin-bottom: 0;
-  background-image: url('/parking-lot-duty/hero.jpg');
   background-size: cover;
-  background-position: center 18%;
+  background-position: center 20%;
   box-shadow: var(--shadow-md);
 }
 
