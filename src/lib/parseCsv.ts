@@ -109,21 +109,30 @@ export async function parseCsv(file: File): Promise<ParsedCsvData> {
  * CSV文字列をパースする（テスト用にも使える）
  */
 export function parseCsvText(text: string): ParsedCsvData {
-  const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+  // UTF-8 BOM（\uFEFF）を除去
+  const cleanText = text.replace(/^\uFEFF/, '');
+  const lines = cleanText.split(/\r?\n/).filter(line => line.trim() !== '');
 
-  if (lines.length < 4) {
+  if (lines.length < 2) {
     throw new Error('CSVのフォーマットが正しくありません（行数不足）');
   }
 
-  // 先頭2行スキップ
-  // 3行目がヘッダー
-  const headerLine = lines[2];
-  const headers = headerLine.split(',');
+  // 「日程」を含む行を動的に探す（先頭列が「日程」の行）
+  let headerLineIndex = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const firstCell = lines[i].split(',')[0].trim();
+    if (firstCell === '日程') {
+      headerLineIndex = i;
+      break;
+    }
+  }
 
-  // ヘッダーの最初は「日程」
-  if (headers[0].trim() !== '日程') {
+  if (headerLineIndex === -1) {
     throw new Error('CSVのヘッダーが正しくありません（「日程」が見つかりません）');
   }
+
+  const headerLine = lines[headerLineIndex];
+  const headers = headerLine.split(',');
 
   // コーチ名のインデックスマッピング
   const allCoachNames: string[] = [];
@@ -148,7 +157,7 @@ export function parseCsvText(text: string): ParsedCsvData {
   }
 
   // データ行をパース（最終行の「コメント」を除外）
-  const dataLines = lines.slice(3);
+  const dataLines = lines.slice(headerLineIndex + 1);
   const filteredDataLines = dataLines.filter(line => !line.startsWith('コメント'));
 
   const days: ParsedDay[] = [];

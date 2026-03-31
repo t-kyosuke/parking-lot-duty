@@ -30,7 +30,7 @@
 
 ### 優先度：高
 1. ~~**管理者モードの動作確認**~~ → ✅ コードレビューで2件のバグを発見・修正済み
-2. **GitHub Pagesデプロイ**：リポジトリ `parking-lot-duty` を作成してデプロイ
+2. ~~**GitHub Pagesデプロイ**~~ → ✅ https://t-kyosuke.github.io/parking-lot-duty/ で公開済み
 
 ### 優先度：中
 3. **当番候補コーチ・除外コーチの編集UI**：Settings.tsxに追加・削除・順番変更の機能
@@ -50,3 +50,4 @@
 | 2026-03-31 | TypeScript型エラー修正（verbatimModuleSyntax対応）、ビルド成功確認 |
 | 2026-03-31 | CLAUDE.md / PROGRESS.md 作成（Claude Code引き継ぎ用） |
 | 2026-03-31 | 管理者モードのバグ2件修正（割り当てボタン消失・手動変更無効） |
+| 2026-03-31 | GitHub Pagesデプロイ完了（https://t-kyosuke.github.io/parking-lot-duty/） |
