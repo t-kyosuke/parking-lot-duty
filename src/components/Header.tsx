@@ -10,7 +10,11 @@ const Header: React.FC<HeaderProps> = ({ isAdmin, onLogout }) => {
     <header className="app-header">
       <div className="header-content">
         <div className="header-title">
-          <span className="header-icon">🅿️</span>
+          <img
+            src="/parking-lot-duty/srs-logo.png"
+            alt="SRS ロゴ"
+            className="header-logo"
+          />
           <div>
             <h1>SRS 駐車場当番</h1>
             <p className="header-subtitle">吹田ラグビースクール</p>
@@ -18,7 +22,7 @@ const Header: React.FC<HeaderProps> = ({ isAdmin, onLogout }) => {
         </div>
         {isAdmin && onLogout && (
           <button className="btn btn-outline btn-sm" onClick={onLogout}>
-            🔓 ログアウト
+            ログアウト
           </button>
         )}
       </div>
