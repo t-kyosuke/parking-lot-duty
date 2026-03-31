@@ -119,7 +119,7 @@ const AdminView: React.FC = () => {
       return {
         date: d.date,
         dayOfWeek: d.dayOfWeek,
-        type: (d.isMatch ? 'match' : d.isCamp ? 'camp' : existing?.type || 'practice') as DayType,
+        type: (d.isMatch ? 'match' : d.isCamp ? 'camp' : d.dayOfWeek === '土' ? 'off' : existing?.type || 'practice') as DayType,
         practiceTime: d.practiceTime || existing?.practiceTime || '',
       };
     });

@@ -15,6 +15,12 @@
 - 本番ビルド成功
 - ブラウザで閲覧者モード表示確認（コンソールエラーなし）
 
+### 2026-03-31：CSVパーサーのエンコーディング誤判定バグ修正（parseCsv.ts）
+- **バグ修正**：UTF-8のCSVがShift_JISとして誤デコードされ「日程」が文字化けするバグを修正
+  - 原因：`isShiftJIS()`が `0xE0〜0xFC` 範囲でチェックしていたが、UTF-8日本語バイト列も同範囲に含まれるため誤判定
+  - 修正：Shift_JIS判定関数を廃止し、「UTF-8で読んで失敗したらShift_JISにフォールバック」方式に変更
+- GitHub Pagesに再デプロイ済み
+
 ### 2026-03-31：管理者モードのバグ修正（AdminView.tsx）
 - **バグ1修正**：同月2回目のCSVアップロード時に「当番を決定する」ボタンが消えるバグを修正
   - 原因：`displayAssignments = assignments || savedData` で savedData が confirmed=true だとボタン条件が false になっていた
