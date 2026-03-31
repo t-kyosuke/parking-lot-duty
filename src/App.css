@@ -14,15 +14,15 @@
   --yellow-glow:   rgba(240,220,0,0.25);
 
   --black:         #080808;
-  --bg:            #0C0C0C;
-  --bg-card:       #141414;
-  --bg-elevated:   #1C1C1C;
-  --bg-hover:      #222222;
-  --bg-input:      #1A1A1A;
+  --bg:            #F2F1ED;
+  --bg-card:       #FFFFFF;
+  --bg-elevated:   #ECEAE4;
+  --bg-hover:      #E8E6E0;
+  --bg-input:      #F5F4F0;
 
-  --text:          #FFFFFF;
-  --text-secondary:#B8B8B8;
-  --text-muted:    #606060;
+  --text:          #111111;
+  --text-secondary:#444444;
+  --text-muted:    #888888;
   --text-black:    #0C0C0C;
 
   --ok:        #22C55E;
@@ -32,9 +32,9 @@
   --no:        #EF4444;
   --no-bg:     rgba(239,68,68,0.12);
 
-  --border:        rgba(255,255,255,0.07);
-  --border-medium: rgba(255,255,255,0.12);
-  --border-yellow: rgba(240,220,0,0.35);
+  --border:        rgba(0,0,0,0.08);
+  --border-medium: rgba(0,0,0,0.14);
+  --border-yellow: rgba(240,220,0,0.60);
 
   --shadow-sm:     0 2px 12px rgba(0,0,0,0.4);
   --shadow-md:     0 4px 24px rgba(0,0,0,0.5);
@@ -67,8 +67,8 @@ body {
   -webkit-font-smoothing: antialiased;
   /* 微細なグリッドテクスチャ */
   background-image:
-    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+    linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
@@ -777,13 +777,13 @@ body {
   text-transform: uppercase;
 }
 
-.attendance-table tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+.attendance-table tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
 
 .sticky-col { position: sticky; left: 0; z-index: 5; background: var(--bg-card); }
 
 .attendance-table th.sticky-col {
   z-index: 15;
-  background: var(--black);
+  background: #111111;
   border-right: 2px solid var(--yellow);
 }
 
@@ -923,14 +923,14 @@ body {
 
 .count-bar-wrapper {
   height: 6px;
-  background: var(--bg-elevated);
+  background: var(--border);
   border-radius: var(--radius-full);
   overflow: hidden;
 }
 
 .count-bar {
   height: 100%;
-  background: rgba(255,255,255,0.25);
+  background: rgba(0,0,0,0.30);
   border-radius: var(--radius-full);
   transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
   min-width: 3px;
@@ -949,8 +949,8 @@ body {
 .count-max .count-name { color: var(--yellow); font-weight: 700; }
 .count-max .count-num  { color: var(--yellow); }
 
-/* 最少：暗いバー */
-.count-min .count-bar  { background: rgba(255,255,255,0.12); }
+/* 最少：薄いバー */
+.count-min .count-bar  { background: rgba(0,0,0,0.12); }
 
 /* 次回開始ポインタ */
 .next-pointer {
