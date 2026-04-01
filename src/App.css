@@ -457,15 +457,40 @@ body {
 
 /* Public Notice */
 .public-notice {
-  margin: 16px auto 0;
+  margin: 20px auto 0;
   max-width: 600px;
-  padding: 16px 20px;
-  background: #fff9e6;
-  border-left: 4px solid #F0DC00;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  line-height: 1.7;
-  color: #333;
+  padding: 20px 24px;
+  background: #111;
+  border-top: 3px solid #F0DC00;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.public-notice-main {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #F0DC00;
+  letter-spacing: 0.04em;
+  margin: 0 0 10px;
+}
+
+.public-notice-sub {
+  font-size: 0.95rem;
+  color: #eee;
+  line-height: 1.8;
+  margin: 0 0 10px;
+}
+
+.public-notice-sub strong {
+  color: #F0DC00;
+  font-weight: 700;
+}
+
+.public-notice-note {
+  font-size: 0.78rem;
+  color: #888;
+  margin: 0;
+  letter-spacing: 0.02em;
 }
 
 /* Admin Login Area */
