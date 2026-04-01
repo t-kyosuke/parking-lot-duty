@@ -493,6 +493,54 @@ body {
   letter-spacing: 0.02em;
 }
 
+/* Publish Section */
+.publish-section {
+  margin-top: 32px;
+  padding: 24px;
+  background: #111;
+  border: 2px solid #F0DC00;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.publish-desc {
+  font-size: 0.85rem;
+  color: #aaa;
+  margin: 0 0 16px;
+}
+
+.btn-publish {
+  background: #F0DC00;
+  color: #000;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 14px 32px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  width: 100%;
+}
+
+.btn-publish:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Settings description */
+.settings-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin: 0 0 12px;
+  line-height: 1.6;
+}
+
+.settings-token-status {
+  font-size: 0.82rem;
+  color: #4CAF50;
+  margin: 8px 0 0;
+}
+
 /* Admin Login Area */
 .admin-login-area {
   text-align: center;

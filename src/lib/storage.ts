@@ -211,6 +211,81 @@ export function resetAllData(): void {
   });
 }
 
+// ── GitHub 連携 ──
+
+const GITHUB_TOKEN_KEY = 'srs_github_token';
+const GITHUB_REPO = 't-kyosuke/parking-lot-duty';
+const GITHUB_DATA_PATH = 'public/data.json';
+
+export interface PublishedData {
+  monthlyData: Record<string, MonthlyData>;
+  schedule: ScheduleDay[];
+  updatedAt: string;
+}
+
+export function getGithubToken(): string {
+  return localStorage.getItem(GITHUB_TOKEN_KEY) ?? '';
+}
+
+export function saveGithubToken(token: string): void {
+  localStorage.setItem(GITHUB_TOKEN_KEY, token);
+}
+
+export async function publishToGithub(token: string): Promise<void> {
+  const data: PublishedData = {
+    monthlyData: getAllMonthlyData(),
+    schedule: getSchedule(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  const jsonStr = JSON.stringify(data, null, 2);
+  const content = btoa(unescape(encodeURIComponent(jsonStr)));
+  const apiUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_DATA_PATH}`;
+
+  // 既存ファイルのSHAを取得（ファイル更新に必要）
+  let sha: string | undefined;
+  const getRes = await fetch(apiUrl, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (getRes.ok) {
+    const fileData = await getRes.json() as { sha: string };
+    sha = fileData.sha;
+  }
+
+  const body: Record<string, string> = {
+    message: `スケジュールデータを更新 (${new Date().toLocaleDateString('ja-JP')})`,
+    content,
+  };
+  if (sha) body.sha = sha;
+
+  const putRes = await fetch(apiUrl, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!putRes.ok) {
+    const err = await putRes.json() as { message?: string };
+    throw new Error(err.message ?? 'GitHub APIへの公開に失敗しました');
+  }
+}
+
+export async function fetchPublishedData(): Promise<PublishedData | null> {
+  try {
+    const apiUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_DATA_PATH}`;
+    const res = await fetch(apiUrl, {
+      headers: { Accept: 'application/vnd.github.v3.raw' },
+    });
+    if (!res.ok) return null;
+    return await res.json() as PublishedData;
+  } catch {
+    return null;
+  }
+}
+
 // ── ユーティリティ ──
 
 export function getMonthNumber(monthStr: string): number {

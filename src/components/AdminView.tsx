@@ -8,6 +8,7 @@ import {
   getPointerState, savePointerState,
   getCumulativeCounts, recalculateCumulativeCounts,
   getSchedule, saveSchedule,
+  getGithubToken, publishToGithub,
 } from '../lib/storage';
 import type { MonthlyData } from '../lib/storage';
 import CsvUploader from './CsvUploader';
@@ -25,6 +26,30 @@ const AdminView: React.FC = () => {
   const [confirmedSchedule, setConfirmedSchedule] = useState<Array<{ date: string; dayOfWeek: string; type: DayType; practiceTime: string }> | null>(null);
   const [assignments, setAssignments] = useState<MonthlyData | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [publishing, setPublishing] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handlePublish = async () => {
+    const token = getGithubToken();
+    if (!token) {
+      showToast('⚙️ 設定タブでGitHubトークンを先に登録してください');
+      return;
+    }
+    setPublishing(true);
+    try {
+      await publishToGithub(token);
+      showToast('🌐 スマホでも見られるように公開しました！');
+    } catch (e) {
+      showToast(`❌ 公開に失敗しました: ${e instanceof Error ? e.message : '不明なエラー'}`);
+    } finally {
+      setPublishing(false);
+    }
+  };
 
   const selectedMonth = MONTHS[selectedMonthIdx];
   const monthNum = parseInt(selectedMonth.replace('月', ''), 10);
@@ -136,6 +161,7 @@ const AdminView: React.FC = () => {
 
   return (
     <div className="admin-view">
+      {toast && <div className="toast">{toast}</div>}
       {/* タブ */}
       <div className="tab-bar">
         <button
@@ -212,6 +238,17 @@ const AdminView: React.FC = () => {
                 counts={counts}
                 nextPointer={pointer}
               />
+
+              <div className="publish-section">
+                <p className="publish-desc">当番が確定したら「公開する」を押してください。スマホでも見られるようになります。</p>
+                <button
+                  className="btn btn-publish"
+                  onClick={handlePublish}
+                  disabled={publishing}
+                >
+                  {publishing ? '公開中...' : '🌐 スマホ向けに公開する'}
+                </button>
+              </div>
             </>
           )}
         </div>

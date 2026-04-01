@@ -5,6 +5,7 @@ import {
   getPointer, savePointer,
   saveAdminPassword,
   exportAllData, importAllData, resetAllData,
+  getGithubToken, saveGithubToken,
 } from '../lib/storage';
 
 interface SettingsProps {
@@ -16,6 +17,7 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
   const [counts, setCounts] = useState(getCumulativeCounts());
 
   const [newPassword, setNewPassword] = useState('');
+  const [githubToken, setGithubToken] = useState(getGithubToken());
   const [toast, setToast] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -35,6 +37,11 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
     setCounts(newCounts);
     saveCumulativeCounts(newCounts);
     onDataChange();
+  };
+
+  const handleGithubTokenSave = () => {
+    saveGithubToken(githubToken.trim());
+    showToast('GitHubトークンを保存しました');
   };
 
   const handlePasswordChange = () => {
@@ -91,6 +98,26 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
   return (
     <div className="settings">
       {toast && <div className="toast">{toast}</div>}
+
+      {/* GitHub連携 */}
+      <div className="settings-section">
+        <h3 className="section-title">📡 GitHub連携（公開設定）</h3>
+        <p className="settings-desc">スマホで当番を確認できるようにするための設定です。GitHubのPersonal Access Tokenを入力してください。</p>
+        <div className="password-change">
+          <input
+            type="password"
+            value={githubToken}
+            onChange={(e) => setGithubToken(e.target.value)}
+            placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+          />
+          <button className="btn btn-primary" onClick={handleGithubTokenSave}>
+            保存
+          </button>
+        </div>
+        {getGithubToken() && (
+          <p className="settings-token-status">✅ トークン設定済み</p>
+        )}
+      </div>
 
       {/* 次回開始位置 */}
       <div className="settings-section">

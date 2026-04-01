@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { MONTHS, COACH_LAST_NAMES, DAY_TYPE_LABELS, DEFAULT_SCHEDULE } from '../lib/constants';
 import type { DayType } from '../lib/constants';
-import { getAllMonthlyData, getSchedule } from '../lib/storage';
+import { getAllMonthlyData, getSchedule, fetchPublishedData } from '../lib/storage';
+import type { MonthlyData } from '../lib/storage';
 
 const HERO_IMAGES = Array.from({ length: 14 }, (_, i) => `/parking-lot-duty/hero-${i + 1}.jpg`);
 
@@ -19,10 +20,25 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
   const selectedMonth = MONTHS[selectedMonthIdx];
   const monthNum = parseInt(selectedMonth.replace('月', ''), 10);
 
-  // 保存済みデータを取得
-  const allData = getAllMonthlyData();
+  // GitHub公開データ（スマホ対応）
+  const [remoteAllData, setRemoteAllData] = useState<Record<string, MonthlyData> | null>(null);
+  const [remoteSchedule, setRemoteSchedule] = useState<typeof DEFAULT_SCHEDULE | null>(null);
+  const [loadingRemote, setLoadingRemote] = useState(true);
+
+  useEffect(() => {
+    fetchPublishedData().then(published => {
+      if (published) {
+        setRemoteAllData(published.monthlyData);
+        setRemoteSchedule(published.schedule);
+      }
+      setLoadingRemote(false);
+    });
+  }, []);
+
+  // リモートデータ優先、なければlocalStorage
+  const allData = remoteAllData ?? getAllMonthlyData();
   const monthData = allData[selectedMonth];
-  const savedSchedule = getSchedule();
+  const savedSchedule = remoteSchedule ?? getSchedule();
 
   // スケジュールデータ（保存済みまたはデフォルト）
   const schedule = useMemo(() => {
@@ -78,7 +94,12 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
           駐車場当番スケジュール
         </h2>
 
-        {hasAssignments ? (
+        {loadingRemote ? (
+          <div className="no-data">
+            <div className="no-data-icon">⏳</div>
+            <p>読み込み中...</p>
+          </div>
+        ) : hasAssignments ? (
           <div className="assignment-list">
             {schedule.map((day) => {
               const assignment = monthData.assignments.find(a => a.date === day.date);
