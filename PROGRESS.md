@@ -43,10 +43,11 @@
 ### 優先度：高
 1. ~~**管理者モードの動作確認**~~ → ✅ コードレビューで2件のバグを発見・修正済み
 2. ~~**GitHub Pagesデプロイ**~~ → ✅ https://t-kyosuke.github.io/parking-lot-duty/ で公開済み
+3. ~~**スマホで「まだ決まっていません」になるバグ**~~ → ✅ GitHub API経由でデータ公開・取得する方式に変更
 
 ### 優先度：中
-3. **当番候補コーチ・除外コーチの編集UI**：Settings.tsxに追加・削除・順番変更の機能
-4. **スマホ実機テスト**：CSVアップロードとLINEコピーの操作感
+4. **当番候補コーチ・除外コーチの編集UI**：Settings.tsxに追加・削除・順番変更の機能
+5. **スマホ実機テスト**：CSVアップロードとLINEコピーの操作感
 
 ### 優先度：低
 5. **練習時間の閲覧者向け表示確認**
@@ -90,3 +91,10 @@
 | 2026-03-31 | CLAUDE.md / PROGRESS.md 作成（Claude Code引き継ぎ用） |
 | 2026-03-31 | 管理者モードのバグ2件修正（割り当てボタン消失・手動変更無効） |
 | 2026-03-31 | GitHub Pagesデプロイ完了（https://t-kyosuke.github.io/parking-lot-duty/） |
+| 2026-04-01 | 閲覧者画面にお知らせ文を追加（黒地・黄色強調デザイン） |
+| 2026-04-01 | スマホ対応：GitHub API経由でデータ公開・取得する方式に変更（publishToGithub / fetchPublishedData） |
+| 2026-04-01 | デプロイ手順を確立（.envのGITHUB_TOKENを使うgit remote set-url方式） |
+| 2026-04-02 | OGPタグ追加（LINE共有時の表示改善） |
+| 2026-04-02 | エクスポート/インポートの2ポインタ不整合修正（owed+searchFromを保存） |
+| 2026-04-02 | AdminView.tsxのany型をAssignmentResult[]に修正 |
+| 2026-04-02 | fetchPublishedDataをraw.githubusercontent.comに変更（APIレート制限対策） |

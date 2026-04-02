@@ -181,7 +181,7 @@ export function exportAllData(): string {
     monthlyData: getAllMonthlyData(),
     coachConfig: getCoachConfig(),
     cumulativeCounts: getCumulativeCounts(),
-    pointer: getPointer(),
+    pointer: getPointerState(),
     changeHistory: getChangeHistory(),
     schedule: getSchedule(),
     adminPassword: getAdminPassword(),
@@ -196,7 +196,14 @@ export function importAllData(jsonString: string): void {
     if (data.monthlyData) setItem(STORAGE_KEYS.MONTHLY_DATA, data.monthlyData);
     if (data.coachConfig) setItem(STORAGE_KEYS.COACH_CONFIG, data.coachConfig);
     if (data.cumulativeCounts) setItem(STORAGE_KEYS.CUMULATIVE_COUNTS, data.cumulativeCounts);
-    if (data.pointer !== undefined) setItem(STORAGE_KEYS.POINTER, data.pointer);
+    if (data.pointer !== undefined) {
+      // PointerState形式({ owed, searchFrom })ならそのまま、旧形式(number)なら変換して保存
+      if (typeof data.pointer === 'number') {
+        setItem(STORAGE_KEYS.POINTER, { owed: data.pointer, searchFrom: data.pointer });
+      } else {
+        setItem(STORAGE_KEYS.POINTER, data.pointer);
+      }
+    }
     if (data.changeHistory) setItem(STORAGE_KEYS.CHANGE_HISTORY, data.changeHistory);
     if (data.schedule) setItem(STORAGE_KEYS.SCHEDULE, data.schedule);
     if (data.adminPassword) setItem(STORAGE_KEYS.ADMIN_PASSWORD, data.adminPassword);
@@ -275,10 +282,8 @@ export async function publishToGithub(token: string): Promise<void> {
 
 export async function fetchPublishedData(): Promise<PublishedData | null> {
   try {
-    const apiUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_DATA_PATH}`;
-    const res = await fetch(apiUrl, {
-      headers: { Accept: 'application/vnd.github.v3.raw' },
-    });
+    const rawUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/gh-pages/data.json`;
+    const res = await fetch(rawUrl);
     if (!res.ok) return null;
     return await res.json() as PublishedData;
   } catch {

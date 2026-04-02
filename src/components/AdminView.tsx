@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { MONTHS, COACH_ORDER, DEFAULT_SCHEDULE } from '../lib/constants';
 import type { AttendanceStatus, DayType } from '../lib/constants';
 import { assignParking } from '../lib/assignParking';
+import type { AssignmentResult } from '../lib/assignParking';
 import type { ParsedCsvData } from '../lib/parseCsv';
 import {
   getMonthlyData, saveMonthlyData,
@@ -124,7 +125,7 @@ const AdminView: React.FC = () => {
     setRefreshKey(k => k + 1);
   }, [confirmedAttendance, confirmedSchedule, selectedMonth]);
 
-  const handleResultUpdate = useCallback((updatedResults: any[]) => {
+  const handleResultUpdate = useCallback((updatedResults: AssignmentResult[]) => {
     const base = assignments || savedData;
     if (!base) return;
     const updated = { ...base, assignments: updatedResults };
