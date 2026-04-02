@@ -222,7 +222,8 @@ export function resetAllData(): void {
 
 const GITHUB_TOKEN_KEY = 'srs_github_token';
 const GITHUB_REPO = 't-kyosuke/parking-lot-duty';
-const GITHUB_DATA_PATH = 'public/data.json';
+const GITHUB_DATA_PATH = 'data.json';
+const GITHUB_BRANCH = 'gh-pages';
 
 export interface PublishedData {
   monthlyData: Record<string, MonthlyData>;
@@ -251,7 +252,7 @@ export async function publishToGithub(token: string): Promise<void> {
 
   // 既存ファイルのSHAを取得（ファイル更新に必要）
   let sha: string | undefined;
-  const getRes = await fetch(apiUrl, {
+  const getRes = await fetch(`${apiUrl}?ref=${GITHUB_BRANCH}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (getRes.ok) {
@@ -259,11 +260,14 @@ export async function publishToGithub(token: string): Promise<void> {
     sha = fileData.sha;
   }
 
-  const body: Record<string, string> = {
+  const body: Record<string, string | undefined> = {
     message: `スケジュールデータを更新 (${new Date().toLocaleDateString('ja-JP')})`,
     content,
+    branch: GITHUB_BRANCH,
+    sha,
   };
-  if (sha) body.sha = sha;
+  // shaがundefinedならプロパティを削除（新規作成時）
+  if (!sha) delete body.sha;
 
   const putRes = await fetch(apiUrl, {
     method: 'PUT',
