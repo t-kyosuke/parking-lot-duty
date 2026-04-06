@@ -28,6 +28,20 @@ export const COACH_LAST_NAMES: Record<string, string> = {
   '大串洋尚': '大串',
 };
 
+// ビデオ当番候補コーチ（林さんは指導に専念するため除外・10名）
+export const VIDEO_COACH_ORDER: string[] = [
+  '塚原匡祐',
+  '国沢剛',
+  '岸下和樹',
+  '堀本和幸',
+  '濱田広宣',
+  '前里元樹',
+  '松木正和',
+  '橋戸佑介',
+  '河井彩登',
+  '大串洋尚',
+];
+
 // 除外コーチ（駐車場当番にアサインしない）
 export const EXCLUDED_COACHES: string[] = [
   '茂木隼人',
@@ -178,9 +192,14 @@ export const DEFAULT_ADMIN_PASSWORD = 'srs2026';
 export const STORAGE_KEYS = {
   MONTHLY_DATA: 'srs_monthly_data',
   COACH_CONFIG: 'srs_coach_config',
-  CUMULATIVE_COUNTS: 'srs_cumulative_counts',
-  POINTER: 'srs_pointer',
+  PARKING_COUNTS: 'srs_parking_counts',
+  VIDEO_COUNTS: 'srs_video_counts',
+  PARKING_POINTER: 'srs_parking_pointer',
+  VIDEO_POINTER: 'srs_video_pointer',
   CHANGE_HISTORY: 'srs_change_history',
   ADMIN_PASSWORD: 'srs_admin_password',
   SCHEDULE: 'srs_schedule',
+  // 旧キー（マイグレーション検出用）
+  _OLD_CUMULATIVE_COUNTS: 'srs_cumulative_counts',
+  _OLD_POINTER: 'srs_pointer',
 } as const;

@@ -35,19 +35,25 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
     });
   }, []);
 
-  // リモートデータ優先、なければlocalStorage
-  const allData = remoteAllData ?? getAllMonthlyData();
+  // ローカルデータ優先（管理者PCでは最新のlocalStorage、スマホではリモート）
+  const localAllData = getAllMonthlyData();
+  const localSchedule = getSchedule();
+  const hasLocalData = Object.keys(localAllData).length > 0;
+  const allData = hasLocalData ? localAllData : (remoteAllData ?? {});
   const monthData = allData[selectedMonth];
-  const savedSchedule = remoteSchedule ?? getSchedule();
+  const savedSchedule = hasLocalData ? localSchedule : (remoteSchedule ?? []);
 
-  // スケジュールデータ（保存済みまたはデフォルト）
+  // スケジュールデータ：確定済み月データがあればそちらを優先（CSVの土曜等も含む）
   const schedule = useMemo(() => {
+    if (monthData?.confirmed && monthData.schedule.length > 0) {
+      return monthData.schedule;
+    }
     const source = savedSchedule.length > 0 ? savedSchedule : DEFAULT_SCHEDULE;
     return source.filter(d => {
       const m = parseInt(d.date.split('/')[0], 10);
       return m === monthNum;
     });
-  }, [savedSchedule, monthNum]);
+  }, [savedSchedule, monthNum, monthData]);
 
   // 今日の日付文字列 "M/D"
   const todayStr = `${now.getMonth() + 1}/${now.getDate()}`;
@@ -91,7 +97,7 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
       <div className="schedule-card">
         <h2 className="schedule-title">
           <span className="schedule-icon">📅</span>
-          駐車場当番スケジュール
+          当番スケジュール
         </h2>
 
         {loadingRemote ? (
@@ -105,8 +111,12 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
               const assignment = monthData.assignments.find(a => a.date === day.date);
               const isToday = day.date === todayStr;
               const isPractice = day.type === 'practice' || day.type === 'special';
-              const coachName = assignment?.coach
+              const isSaturday = assignment?.isSaturday || day.dayOfWeek === '土';
+              const parkingName = assignment?.coach
                 ? COACH_LAST_NAMES[assignment.coach] || assignment.coach
+                : null;
+              const videoName = assignment?.videoCoach
+                ? COACH_LAST_NAMES[assignment.videoCoach] || assignment.videoCoach
                 : null;
 
               return (
@@ -125,11 +135,20 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
                   </div>
                   <div className="schedule-coach">
                     {isPractice ? (
-                      coachName ? (
-                        <span className="coach-badge">{coachName}さん</span>
-                      ) : (
-                        <span className="no-coach">未定</span>
-                      )
+                      <div className="duty-display">
+                        <span className="duty-line">
+                          <span className="duty-line-label">駐車場▶</span>
+                          <span className="duty-line-value">
+                            {isSaturday ? <span className="duty-none">ー</span> : parkingName ? <span className="coach-badge">{parkingName}さん</span> : <span className="no-coach">未定</span>}
+                          </span>
+                        </span>
+                        <span className="duty-line">
+                          <span className="duty-line-label">ビデオ▶</span>
+                          <span className="duty-line-value">
+                            {videoName ? <span className="coach-badge">{videoName}さん</span> : <span className="no-coach">未定</span>}
+                          </span>
+                        </span>
+                      </div>
                     ) : (
                       <span className="day-type-badge">
                         {getTypeIcon(day.type)} {DAY_TYPE_LABELS[day.type]}
@@ -152,10 +171,10 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
 
       {/* お知らせ */}
       <div className="public-notice">
-        <p className="public-notice-main">🅿️ 今月の駐車場当番は上記の通りです。</p>
+        <p className="public-notice-main">🅿️🎥 今月の当番は上記の通りです。</p>
         <p className="public-notice-sub">
-          役割を終えたコーチは、<strong>黄色うちわ&amp;カゴセット</strong>を<br />
-          次の担当の方にお渡しください！
+          駐車場当番の役割を終えたコーチは、<strong>黄色のうちわ＆カゴセット</strong>を<br />
+          次の駐車場当番の方にお渡しください！
         </p>
         <p className="public-notice-note">※ 空気入れの充電もお願いいたします。</p>
       </div>

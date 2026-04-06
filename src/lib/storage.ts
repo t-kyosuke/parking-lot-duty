@@ -1,4 +1,4 @@
-import { STORAGE_KEYS, DEFAULT_ADMIN_PASSWORD, COACH_ORDER, DEFAULT_SCHEDULE } from './constants';
+import { STORAGE_KEYS, DEFAULT_ADMIN_PASSWORD, COACH_ORDER, VIDEO_COACH_ORDER, DEFAULT_SCHEDULE } from './constants';
 import type { ScheduleDay, AttendanceStatus } from './constants';
 import type { AssignmentResult } from './assignParking';
 
@@ -22,6 +22,7 @@ export interface ChangeHistoryEntry {
   month: string;
   originalCoach: string;
   newCoach: string;
+  dutyType: 'parking' | 'video';
   changedAt: string;
 }
 
@@ -39,6 +40,17 @@ function getItem<T>(key: string, defaultValue: T): T {
 
 function setItem<T>(key: string, value: T): void {
   localStorage.setItem(key, JSON.stringify(value));
+}
+
+// ── マイグレーション（旧データ検出→全リセット）──
+
+export function migrateIfNeeded(): void {
+  const oldPointer = localStorage.getItem(STORAGE_KEYS._OLD_POINTER);
+  const oldCounts = localStorage.getItem(STORAGE_KEYS._OLD_CUMULATIVE_COUNTS);
+  if (oldPointer !== null || oldCounts !== null) {
+    // 旧形式データを検出 → 全リセット
+    resetAllData();
+  }
 }
 
 // ── 月別データ ──
@@ -71,62 +83,90 @@ export function saveCoachConfig(config: CoachConfig): void {
   setItem(STORAGE_KEYS.COACH_CONFIG, config);
 }
 
-// ── 累計担当回数 ──
+// ── 累計担当回数（駐車場・ビデオ独立）──
 
-export function getCumulativeCounts(): Record<string, number> {
-  return getItem<Record<string, number>>(STORAGE_KEYS.CUMULATIVE_COUNTS, {});
+export function getParkingCounts(): Record<string, number> {
+  return getItem<Record<string, number>>(STORAGE_KEYS.PARKING_COUNTS, {});
 }
 
-export function saveCumulativeCounts(counts: Record<string, number>): void {
-  setItem(STORAGE_KEYS.CUMULATIVE_COUNTS, counts);
+export function saveParkingCounts(counts: Record<string, number>): void {
+  setItem(STORAGE_KEYS.PARKING_COUNTS, counts);
 }
 
-export function recalculateCumulativeCounts(): Record<string, number> {
+export function getVideoCounts(): Record<string, number> {
+  return getItem<Record<string, number>>(STORAGE_KEYS.VIDEO_COUNTS, {});
+}
+
+export function saveVideoCounts(counts: Record<string, number>): void {
+  setItem(STORAGE_KEYS.VIDEO_COUNTS, counts);
+}
+
+export function recalculateCumulativeCounts(): { parking: Record<string, number>; video: Record<string, number> } {
   const allData = getAllMonthlyData();
-  const counts: Record<string, number> = {};
+  const parking: Record<string, number> = {};
+  const video: Record<string, number> = {};
 
   for (const coach of COACH_ORDER) {
-    counts[coach] = 0;
+    parking[coach] = 0;
+  }
+  for (const coach of VIDEO_COACH_ORDER) {
+    video[coach] = 0;
   }
 
   for (const month of Object.values(allData)) {
     if (!month.confirmed) continue;
     for (const assignment of month.assignments) {
       if (assignment.coach) {
-        counts[assignment.coach] = (counts[assignment.coach] || 0) + 1;
+        parking[assignment.coach] = (parking[assignment.coach] || 0) + 1;
+      }
+      if (assignment.videoCoach) {
+        video[assignment.videoCoach] = (video[assignment.videoCoach] || 0) + 1;
       }
     }
   }
 
-  saveCumulativeCounts(counts);
-  return counts;
+  saveParkingCounts(parking);
+  saveVideoCounts(video);
+  return { parking, video };
 }
 
-// ── ポインタ（2ポインタ方式）──
+// ── ポインタ（駐車場・ビデオ独立、各2ポインタ方式）──
 
 export interface PointerState {
   owed: number;       // 次回先頭候補（借り越し中の人）
   searchFrom: number; // 代役を探す開始位置
 }
 
-export function getPointerState(): PointerState {
-  const stored = getItem<number | PointerState>(STORAGE_KEYS.POINTER, 0);
-  // 旧形式（number）との後方互換
-  if (typeof stored === 'number') return { owed: stored, searchFrom: stored };
-  return stored;
+export function getParkingPointerState(): PointerState {
+  return getItem<PointerState>(STORAGE_KEYS.PARKING_POINTER, { owed: 0, searchFrom: 0 });
 }
 
-export function getPointer(): number {
-  return getPointerState().owed;
+export function saveParkingPointerState(owed: number, searchFrom: number): void {
+  setItem(STORAGE_KEYS.PARKING_POINTER, { owed, searchFrom });
 }
 
-export function savePointerState(owed: number, searchFrom: number): void {
-  setItem(STORAGE_KEYS.POINTER, { owed, searchFrom });
+export function getParkingPointer(): number {
+  return getParkingPointerState().owed;
 }
 
-export function savePointer(pointer: number): void {
-  // 設定画面から手動変更した場合は両方同じ値にリセット
-  savePointerState(pointer, pointer);
+export function saveParkingPointer(pointer: number): void {
+  saveParkingPointerState(pointer, pointer);
+}
+
+export function getVideoPointerState(): PointerState {
+  return getItem<PointerState>(STORAGE_KEYS.VIDEO_POINTER, { owed: 0, searchFrom: 0 });
+}
+
+export function saveVideoPointerState(owed: number, searchFrom: number): void {
+  setItem(STORAGE_KEYS.VIDEO_POINTER, { owed, searchFrom });
+}
+
+export function getVideoPointer(): number {
+  return getVideoPointerState().owed;
+}
+
+export function saveVideoPointer(pointer: number): void {
+  saveVideoPointerState(pointer, pointer);
 }
 
 // ── 変更履歴 ──
@@ -180,8 +220,10 @@ export function exportAllData(): string {
   const data = {
     monthlyData: getAllMonthlyData(),
     coachConfig: getCoachConfig(),
-    cumulativeCounts: getCumulativeCounts(),
-    pointer: getPointerState(),
+    parkingCounts: getParkingCounts(),
+    videoCounts: getVideoCounts(),
+    parkingPointer: getParkingPointerState(),
+    videoPointer: getVideoPointerState(),
     changeHistory: getChangeHistory(),
     schedule: getSchedule(),
     adminPassword: getAdminPassword(),
@@ -195,15 +237,10 @@ export function importAllData(jsonString: string): void {
 
     if (data.monthlyData) setItem(STORAGE_KEYS.MONTHLY_DATA, data.monthlyData);
     if (data.coachConfig) setItem(STORAGE_KEYS.COACH_CONFIG, data.coachConfig);
-    if (data.cumulativeCounts) setItem(STORAGE_KEYS.CUMULATIVE_COUNTS, data.cumulativeCounts);
-    if (data.pointer !== undefined) {
-      // PointerState形式({ owed, searchFrom })ならそのまま、旧形式(number)なら変換して保存
-      if (typeof data.pointer === 'number') {
-        setItem(STORAGE_KEYS.POINTER, { owed: data.pointer, searchFrom: data.pointer });
-      } else {
-        setItem(STORAGE_KEYS.POINTER, data.pointer);
-      }
-    }
+    if (data.parkingCounts) setItem(STORAGE_KEYS.PARKING_COUNTS, data.parkingCounts);
+    if (data.videoCounts) setItem(STORAGE_KEYS.VIDEO_COUNTS, data.videoCounts);
+    if (data.parkingPointer) setItem(STORAGE_KEYS.PARKING_POINTER, data.parkingPointer);
+    if (data.videoPointer) setItem(STORAGE_KEYS.VIDEO_POINTER, data.videoPointer);
     if (data.changeHistory) setItem(STORAGE_KEYS.CHANGE_HISTORY, data.changeHistory);
     if (data.schedule) setItem(STORAGE_KEYS.SCHEDULE, data.schedule);
     if (data.adminPassword) setItem(STORAGE_KEYS.ADMIN_PASSWORD, data.adminPassword);
@@ -213,9 +250,13 @@ export function importAllData(jsonString: string): void {
 }
 
 export function resetAllData(): void {
+  // 新キー
   Object.values(STORAGE_KEYS).forEach(key => {
     localStorage.removeItem(key);
   });
+  // 旧キーも念のため削除
+  localStorage.removeItem('srs_cumulative_counts');
+  localStorage.removeItem('srs_pointer');
 }
 
 // ── GitHub 連携 ──

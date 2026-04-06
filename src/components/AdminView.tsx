@@ -1,13 +1,14 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { MONTHS, COACH_ORDER, DEFAULT_SCHEDULE } from '../lib/constants';
+import { MONTHS, COACH_ORDER, VIDEO_COACH_ORDER, DEFAULT_SCHEDULE } from '../lib/constants';
 import type { AttendanceStatus, DayType } from '../lib/constants';
-import { assignParking } from '../lib/assignParking';
+import { assignDuties } from '../lib/assignParking';
 import type { AssignmentResult } from '../lib/assignParking';
 import type { ParsedCsvData } from '../lib/parseCsv';
 import {
   getMonthlyData, saveMonthlyData,
-  getPointerState, savePointerState,
-  getCumulativeCounts, recalculateCumulativeCounts,
+  getParkingPointerState, saveParkingPointerState,
+  getVideoPointerState, saveVideoPointerState,
+  getParkingCounts, getVideoCounts, recalculateCumulativeCounts,
   getSchedule, saveSchedule,
   getGithubToken, publishToGithub,
 } from '../lib/storage';
@@ -96,13 +97,19 @@ const AdminView: React.FC = () => {
   const handleAssign = useCallback(() => {
     if (!confirmedAttendance || !confirmedSchedule) return;
 
+    // 練習・運動会等の日を対象（土曜日も含む）
     const practiceDays = confirmedSchedule
       .filter(d => d.type === 'practice' || d.type === 'special')
       .map(d => ({ date: d.date, dayOfWeek: d.dayOfWeek, practiceTime: d.practiceTime }));
 
-    const { owed, searchFrom } = getPointerState();
-    const { results, nextPointer, nextSearchFrom } = assignParking(
-      practiceDays, confirmedAttendance, owed, COACH_ORDER, searchFrom
+    const parkingPtr = getParkingPointerState();
+    const videoPtr = getVideoPointerState();
+
+    const { results, parkingNextPointer, parkingNextSearchFrom, videoNextPointer, videoNextSearchFrom } = assignDuties(
+      practiceDays, confirmedAttendance,
+      parkingPtr.owed, parkingPtr.searchFrom,
+      videoPtr.owed, videoPtr.searchFrom,
+      COACH_ORDER, VIDEO_COACH_ORDER,
     );
 
     const monthData: MonthlyData = {
@@ -119,7 +126,8 @@ const AdminView: React.FC = () => {
     };
 
     saveMonthlyData(selectedMonth, monthData);
-    savePointerState(nextPointer, nextSearchFrom);
+    saveParkingPointerState(parkingNextPointer, parkingNextSearchFrom);
+    saveVideoPointerState(videoNextPointer, videoNextSearchFrom);
     recalculateCumulativeCounts();
     setAssignments(monthData);
     setRefreshKey(k => k + 1);
@@ -149,7 +157,7 @@ const AdminView: React.FC = () => {
         return {
           date: d.date,
           dayOfWeek: d.dayOfWeek,
-          type: (d.isMatch ? 'match' : d.isCamp ? 'camp' : d.dayOfWeek === '土' ? 'off' : existing?.type || 'practice') as DayType,
+          type: (d.isMatch ? 'match' : d.isCamp ? 'camp' : existing?.type || 'practice') as DayType,
           practiceTime: d.practiceTime || existing?.practiceTime || '',
         };
       });
@@ -157,8 +165,10 @@ const AdminView: React.FC = () => {
 
   // CSVから新しく出欠確認中の場合は古い保存データを使わない（ボタン表示バグ防止）
   const displayAssignments = confirmedAttendance ? assignments : (assignments || savedData);
-  const counts = getCumulativeCounts();
-  const pointer = getPointerState().owed;
+  const parkingCounts = getParkingCounts();
+  const videoCounts = getVideoCounts();
+  const parkingPointer = getParkingPointerState().owed;
+  const videoPointer = getVideoPointerState().owed;
 
   return (
     <div className="admin-view">
@@ -236,8 +246,10 @@ const AdminView: React.FC = () => {
               />
 
               <CumulativeCount
-                counts={counts}
-                nextPointer={pointer}
+                parkingCounts={parkingCounts}
+                videoCounts={videoCounts}
+                parkingPointer={parkingPointer}
+                videoPointer={videoPointer}
               />
 
               <div className="publish-section">

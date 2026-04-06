@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { COACH_ORDER, COACH_LAST_NAMES } from '../lib/constants';
+import { COACH_ORDER, VIDEO_COACH_ORDER, COACH_LAST_NAMES } from '../lib/constants';
 import {
-  getCumulativeCounts, saveCumulativeCounts,
-  getPointer, savePointer,
+  getParkingCounts, saveParkingCounts,
+  getVideoCounts, saveVideoCounts,
+  getParkingPointer, saveParkingPointer,
+  getVideoPointer, saveVideoPointer,
   saveAdminPassword,
   exportAllData, importAllData, resetAllData,
   getGithubToken, saveGithubToken,
@@ -13,8 +15,10 @@ interface SettingsProps {
 }
 
 const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
-  const [pointer, setPointer] = useState(getPointer());
-  const [counts, setCounts] = useState(getCumulativeCounts());
+  const [parkingPointer, setParkingPointer] = useState(getParkingPointer());
+  const [videoPointer, setVideoPointer] = useState(getVideoPointer());
+  const [parkingCounts, setParkingCounts] = useState(getParkingCounts());
+  const [videoCounts, setVideoCounts] = useState(getVideoCounts());
 
   const [newPassword, setNewPassword] = useState('');
   const [githubToken, setGithubToken] = useState(getGithubToken());
@@ -25,17 +29,31 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
     setTimeout(() => setToast(null), 2500);
   };
 
-  const handlePointerChange = (val: number) => {
-    setPointer(val);
-    savePointer(val);
+  const handleParkingPointerChange = (val: number) => {
+    setParkingPointer(val);
+    saveParkingPointer(val);
     onDataChange();
-    showToast('次回開始位置を更新しました');
+    showToast('駐車場の次回開始位置を更新しました');
   };
 
-  const handleCountChange = (coach: string, value: number) => {
-    const newCounts = { ...counts, [coach]: Math.max(0, value) };
-    setCounts(newCounts);
-    saveCumulativeCounts(newCounts);
+  const handleVideoPointerChange = (val: number) => {
+    setVideoPointer(val);
+    saveVideoPointer(val);
+    onDataChange();
+    showToast('ビデオの次回開始位置を更新しました');
+  };
+
+  const handleParkingCountChange = (coach: string, value: number) => {
+    const newCounts = { ...parkingCounts, [coach]: Math.max(0, value) };
+    setParkingCounts(newCounts);
+    saveParkingCounts(newCounts);
+    onDataChange();
+  };
+
+  const handleVideoCountChange = (coach: string, value: number) => {
+    const newCounts = { ...videoCounts, [coach]: Math.max(0, value) };
+    setVideoCounts(newCounts);
+    saveVideoCounts(newCounts);
     onDataChange();
   };
 
@@ -60,7 +78,7 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `srs-parking-data-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `srs-duty-data-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
     showToast('データをエクスポートしました');
@@ -75,10 +93,11 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
         importAllData(reader.result as string);
         onDataChange();
         showToast('データをインポートしました');
-        // 状態をリフレッシュ
-        setPointer(getPointer());
-        setCounts(getCumulativeCounts());
-      } catch (err) {
+        setParkingPointer(getParkingPointer());
+        setVideoPointer(getVideoPointer());
+        setParkingCounts(getParkingCounts());
+        setVideoCounts(getVideoCounts());
+      } catch {
         showToast('インポートに失敗しました');
       }
     };
@@ -86,12 +105,16 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
   };
 
   const handleReset = () => {
-    if (confirm('全データを削除してリセットしますか？この操作は取り消せません。')) {
+    if (window.confirm('全データを削除してリセットしますか？この操作は取り消せません。')) {
       resetAllData();
       onDataChange();
-      setPointer(0);
-      setCounts({});
+      setParkingPointer(0);
+      setVideoPointer(0);
+      setParkingCounts({});
+      setVideoCounts({});
       showToast('全データをリセットしました');
+      // ページを再読み込みして確実にクリーンな状態にする
+      setTimeout(() => window.location.reload(), 500);
     }
   };
 
@@ -119,13 +142,13 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
         )}
       </div>
 
-      {/* 次回開始位置 */}
+      {/* 駐車場：次回開始位置 */}
       <div className="settings-section">
-        <h3 className="section-title">次回開始位置</h3>
+        <h3 className="section-title">🅿️ 駐車場当番 - 次回開始位置</h3>
         <select
           className="settings-select"
-          value={pointer}
-          onChange={(e) => handlePointerChange(Number(e.target.value))}
+          value={parkingPointer}
+          onChange={(e) => handleParkingPointerChange(Number(e.target.value))}
         >
           {COACH_ORDER.map((coach, idx) => (
             <option key={coach} value={idx}>
@@ -135,9 +158,25 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
         </select>
       </div>
 
-      {/* 累計回数の手動調整 */}
+      {/* ビデオ：次回開始位置 */}
       <div className="settings-section">
-        <h3 className="section-title">累計担当回数の調整</h3>
+        <h3 className="section-title">🎥 ビデオ当番 - 次回開始位置</h3>
+        <select
+          className="settings-select"
+          value={videoPointer}
+          onChange={(e) => handleVideoPointerChange(Number(e.target.value))}
+        >
+          {VIDEO_COACH_ORDER.map((coach, idx) => (
+            <option key={coach} value={idx}>
+              {COACH_LAST_NAMES[coach]}さん（{idx + 1}番目）
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* 駐車場：累計回数 */}
+      <div className="settings-section">
+        <h3 className="section-title">🅿️ 駐車場当番 - 累計回数の調整</h3>
         <div className="count-edit-grid">
           {COACH_ORDER.map(coach => (
             <div key={coach} className="count-edit-row">
@@ -145,12 +184,35 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
               <div className="count-edit-controls">
                 <button
                   className="btn btn-xs"
-                  onClick={() => handleCountChange(coach, (counts[coach] || 0) - 1)}
+                  onClick={() => handleParkingCountChange(coach, (parkingCounts[coach] || 0) - 1)}
                 >−</button>
-                <span className="count-edit-num">{counts[coach] || 0}</span>
+                <span className="count-edit-num">{parkingCounts[coach] || 0}</span>
                 <button
                   className="btn btn-xs"
-                  onClick={() => handleCountChange(coach, (counts[coach] || 0) + 1)}
+                  onClick={() => handleParkingCountChange(coach, (parkingCounts[coach] || 0) + 1)}
+                >+</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ビデオ：累計回数 */}
+      <div className="settings-section">
+        <h3 className="section-title">🎥 ビデオ当番 - 累計回数の調整</h3>
+        <div className="count-edit-grid">
+          {VIDEO_COACH_ORDER.map(coach => (
+            <div key={coach} className="count-edit-row">
+              <span>{COACH_LAST_NAMES[coach]}</span>
+              <div className="count-edit-controls">
+                <button
+                  className="btn btn-xs"
+                  onClick={() => handleVideoCountChange(coach, (videoCounts[coach] || 0) - 1)}
+                >−</button>
+                <span className="count-edit-num">{videoCounts[coach] || 0}</span>
+                <button
+                  className="btn btn-xs"
+                  onClick={() => handleVideoCountChange(coach, (videoCounts[coach] || 0) + 1)}
                 >+</button>
               </div>
             </div>

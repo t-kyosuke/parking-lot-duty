@@ -3,7 +3,11 @@ import Header from './components/Header';
 import PublicView from './components/PublicView';
 import AdminLogin from './components/AdminLogin';
 import AdminView from './components/AdminView';
+import { migrateIfNeeded } from './lib/storage';
 import './App.css';
+
+// 旧データ形式がある場合は全リセットする
+migrateIfNeeded();
 
 type AppMode = 'public' | 'login' | 'admin';
 
