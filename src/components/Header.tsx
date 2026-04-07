@@ -16,7 +16,7 @@ const Header: React.FC<HeaderProps> = ({ isAdmin, onLogout }) => {
             className="header-logo"
           />
           <div>
-            <h1>SRS 駐車場当番</h1>
+            <h1>SRS 駐車場・ビデオ当番</h1>
             <p className="header-subtitle">吹田ラグビースクール</p>
           </div>
         </div>
