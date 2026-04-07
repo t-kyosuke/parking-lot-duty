@@ -173,7 +173,8 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
       <div className="public-notice">
         <p className="public-notice-main">🅿️🎥 今月の当番は上記の通りです。</p>
         <p className="public-notice-sub">
-          駐車場当番の役割を終えたコーチは、<strong>黄色のうちわ＆カゴセット</strong>を<br />
+          駐車場当番の役割を終えたコーチは<br />
+          <strong>黄色のうちわ＆カゴセット</strong>を<br />
           次の駐車場当番の方にお渡しください！
         </p>
         <p className="public-notice-note">※ 空気入れの充電もお願いいたします。</p>
