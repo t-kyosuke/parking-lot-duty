@@ -506,7 +506,7 @@ body {
 /* TODAY マーカー */
 .today-marker {
   position: absolute;
-  right: 20px;
+  right: 220px;
   top: 50%;
   transform: translateY(-50%);
   background: var(--text-black);
@@ -1486,7 +1486,7 @@ body {
     font-size: 0.8rem;
   }
 
-  .today-marker { right: 10px; font-size: 0.56rem; }
+  .today-marker { right: 170px; font-size: 0.56rem; }
 
   .count-edit-grid    { grid-template-columns: 1fr; }
   .schedule-type-row  { grid-template-columns: 78px 80px 1fr; gap: 6px; }
