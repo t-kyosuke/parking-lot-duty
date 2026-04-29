@@ -354,14 +354,10 @@ export function saveGithubToken(token: string): void {
 }
 
 async function fetchCurrentDataJsonSha(token: string, apiUrl: string): Promise<string | undefined> {
-  // キャッシュバスティング用クエリ + cache: 'no-store' でブラウザ/CDNキャッシュを回避
+  // クエリにタイムスタンプを付けてキャッシュ回避（GitHub APIのCORSを壊さないようヘッダーは最小限）
   const url = `${apiUrl}?ref=${GITHUB_BRANCH}&_=${Date.now()}`;
   const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Cache-Control': 'no-cache',
-      'If-None-Match': '', // ETagベースの304回避
-    },
+    headers: { Authorization: `Bearer ${token}` },
     cache: 'no-store',
   });
   if (!res.ok) return undefined;
@@ -398,9 +394,7 @@ export async function publishToGithub(token: string): Promise<void> {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
       },
-      cache: 'no-store',
       body: JSON.stringify(body),
     });
 
