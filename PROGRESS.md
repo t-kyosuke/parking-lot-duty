@@ -17,7 +17,18 @@
   - 完了フラグ `srs_migration_remove_hayashi_v1` を立てて再実行を防止
 - **テスト**：林さんは元々テストデータで常に△か×だったので期待値は変わらず通過
 - **CLAUDE.md**：固定順リスト・期待出力・テスト表を10名前提に更新（旧記述の不整合も同時修正）
-- **デプロイ予定**：本変更後にビルド＆push
+- **デプロイ済み**：mainにpush → GitHub Actionsで自動デプロイ完了
+
+### 2026-04-27：スマホ公開ボタンの不具合修正（publishToGithub）
+- **症状1**：「公開する」ボタン押下時に「data.json does not match {sha}」エラー
+  - 原因：ブラウザキャッシュにより GitHub API から古い SHA が返り、PUT 時にズレていた
+  - 修正：GET にキャッシュバスティングクエリ（`?_=timestamp`）と `cache: 'no-store'` を追加。
+    SHA不一致（409 or "does not match"）を検知したら最新 SHA を取り直して1回自動リトライ
+- **症状2**：上記修正後に「Failed to fetch」エラーに変化
+  - 原因：追加した `Cache-Control` / `If-None-Match` ヘッダーが GitHub API の CORS プリフライトを通らなかった
+  - 修正：これらのヘッダーを削除し、キャッシュ回避はクエリパラメータと `cache: 'no-store'` のみで実現
+- **動作確認**：塚原さんのMacで「公開する」成功確認済み
+- **デプロイ済み**：mainにpush → GitHub Actionsで自動デプロイ完了
 
 ### 2026-03-30〜31：基本実装
 - プロジェクトセットアップ（Vite + React + TypeScript）
@@ -141,3 +152,5 @@
 | 2026-04-11 | TODAYバッジの位置修正：名前バッジと被らないよう右端→「駐車場▶」ラベルの少し左・上下中央に移動（App.css）→ ビルド&デプロイ済み |
 | 2026-04-12 | OGPタグ更新：LINE共有時の表示を「SRS 駐車場＆ビデオ当番」「SRS51th 駐車場＆ビデオ当番スケジュール」に変更（index.html）→ ビルド&デプロイ済み |
 | 2026-04-27 | 林さんを駐車場当番からも除外（COACH_ORDER 11→10名、EXCLUDED_COACHES追加）。1回限りのマイグレーション処理で5月以降のassignments・林さんの累計をリセットしポインタを4月終了時点に巻き戻し |
+| 2026-04-27 | スマホ公開時の「data.json does not match SHA」エラー修正：GETにキャッシュバスティング+cache:no-store追加、SHA不一致時の自動リトライ実装 |
+| 2026-04-27 | スマホ公開時の「Failed to fetch」エラー修正：追加カスタムヘッダーがCORSプリフライトに弾かれていたため削除 |
