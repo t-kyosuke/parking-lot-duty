@@ -353,6 +353,22 @@ export function saveGithubToken(token: string): void {
   localStorage.setItem(GITHUB_TOKEN_KEY, token);
 }
 
+async function fetchCurrentDataJsonSha(token: string, apiUrl: string): Promise<string | undefined> {
+  // キャッシュバスティング用クエリ + cache: 'no-store' でブラウザ/CDNキャッシュを回避
+  const url = `${apiUrl}?ref=${GITHUB_BRANCH}&_=${Date.now()}`;
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Cache-Control': 'no-cache',
+      'If-None-Match': '', // ETagベースの304回避
+    },
+    cache: 'no-store',
+  });
+  if (!res.ok) return undefined;
+  const fileData = await res.json() as { sha: string };
+  return fileData.sha;
+}
+
 export async function publishToGithub(token: string): Promise<void> {
   const data: PublishedData = {
     monthlyData: getAllMonthlyData(),
@@ -364,38 +380,44 @@ export async function publishToGithub(token: string): Promise<void> {
   const content = btoa(unescape(encodeURIComponent(jsonStr)));
   const apiUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_DATA_PATH}`;
 
-  // 既存ファイルのSHAを取得（ファイル更新に必要）
-  let sha: string | undefined;
-  const getRes = await fetch(`${apiUrl}?ref=${GITHUB_BRANCH}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (getRes.ok) {
-    const fileData = await getRes.json() as { sha: string };
-    sha = fileData.sha;
+  // 1〜2回試行（SHAがキャッシュされていた場合のリカバリ用）
+  let lastError: string | null = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const sha = await fetchCurrentDataJsonSha(token, apiUrl);
+
+    const body: Record<string, string | undefined> = {
+      message: `スケジュールデータを更新 (${new Date().toLocaleDateString('ja-JP')})`,
+      content,
+      branch: GITHUB_BRANCH,
+      sha,
+    };
+    if (!sha) delete body.sha;
+
+    const putRes = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+      },
+      cache: 'no-store',
+      body: JSON.stringify(body),
+    });
+
+    if (putRes.ok) {
+      return; // 成功
+    }
+
+    const err = await putRes.json().catch(() => ({})) as { message?: string };
+    lastError = err.message ?? '不明なエラー';
+
+    // SHA不一致エラーなら、最新SHAを取り直して再試行
+    const isShaMismatch = putRes.status === 409 ||
+      (lastError && lastError.includes('does not match'));
+    if (!isShaMismatch) break;
   }
 
-  const body: Record<string, string | undefined> = {
-    message: `スケジュールデータを更新 (${new Date().toLocaleDateString('ja-JP')})`,
-    content,
-    branch: GITHUB_BRANCH,
-    sha,
-  };
-  // shaがundefinedならプロパティを削除（新規作成時）
-  if (!sha) delete body.sha;
-
-  const putRes = await fetch(apiUrl, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!putRes.ok) {
-    const err = await putRes.json() as { message?: string };
-    throw new Error(err.message ?? 'GitHub APIへの公開に失敗しました');
-  }
+  throw new Error(lastError ?? 'GitHub APIへの公開に失敗しました');
 }
 
 export async function fetchPublishedData(): Promise<PublishedData | null> {
