@@ -53,6 +53,79 @@ export function migrateIfNeeded(): void {
   }
 }
 
+/**
+ * 林さんを駐車場当番から除外した際の1回限りのマイグレーション処理（2026-04-27 導入）
+ *
+ * 起動時に一度だけ実行：
+ * 1. 林さんの駐車場累計回数を削除
+ * 2. 5月以降の割り当て結果（assignments）をクリアし confirmed=false に戻す
+ *    （4月の確定済み割り当ては変更しない）
+ * 3. 駐車場ポインタを「4月の最後の確定済み当番者の次」に巻き戻す
+ *    （4月が未確定なら何もしない＝安全側）
+ * 4. 完了フラグを立てて再実行を防止
+ */
+export function migrateRemoveHayashi(): void {
+  if (localStorage.getItem(STORAGE_KEYS.MIGRATION_REMOVE_HAYASHI) === 'done') {
+    return;
+  }
+
+  // 1. 林さんの累計を削除
+  const counts = getParkingCounts();
+  if ('林和憲' in counts) {
+    delete counts['林和憲'];
+    saveParkingCounts(counts);
+  }
+
+  // 2. 5月以降の月別データの assignments をクリア
+  const allData = getAllMonthlyData();
+  const monthsToReset = ['5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月', '1月', '2月', '3月'];
+  let monthlyDataChanged = false;
+  for (const month of monthsToReset) {
+    const data = allData[month];
+    if (data && (data.assignments?.length ?? 0) > 0) {
+      data.assignments = [];
+      data.confirmed = false;
+      monthlyDataChanged = true;
+    }
+  }
+  if (monthlyDataChanged) {
+    setItem(STORAGE_KEYS.MONTHLY_DATA, allData);
+  }
+
+  // 3. ポインタを「4月の最後の確定済み駐車場当番者の次」に巻き戻す
+  const aprilData = allData['4月'];
+  if (aprilData?.confirmed && aprilData.assignments?.length > 0) {
+    let lastParkingCoach: string | null = null;
+    for (let i = aprilData.assignments.length - 1; i >= 0; i--) {
+      const c = aprilData.assignments[i].coach;
+      if (c && c !== '林和憲') {
+        lastParkingCoach = c;
+        break;
+      }
+    }
+    if (lastParkingCoach) {
+      const idx = COACH_ORDER.indexOf(lastParkingCoach);
+      if (idx >= 0) {
+        const nextIdx = (idx + 1) % COACH_ORDER.length;
+        saveParkingPointerState(nextIdx, nextIdx);
+      }
+    }
+  }
+
+  // 4. 累計を再計算して反映（5月以降のクリア分が累計から落ちる）
+  recalculateCumulativeCounts();
+
+  // 5. recalculate が過去の確定済みデータから林さんを再構築する可能性があるので念のため再削除
+  const finalCounts = getParkingCounts();
+  if ('林和憲' in finalCounts) {
+    delete finalCounts['林和憲'];
+    saveParkingCounts(finalCounts);
+  }
+
+  // 6. 完了フラグを立てる
+  localStorage.setItem(STORAGE_KEYS.MIGRATION_REMOVE_HAYASHI, 'done');
+}
+
 // ── 月別データ ──
 
 export function getMonthlyData(month: string): MonthlyData | null {

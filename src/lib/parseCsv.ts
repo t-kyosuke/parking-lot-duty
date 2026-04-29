@@ -25,7 +25,7 @@ function normalizeCoachName(name: string): string {
 }
 
 /**
- * CSVヘッダーのコーチ名と当番候補11名を照合する
+ * CSVヘッダーのコーチ名と当番候補10名を照合する
  */
 function matchCoachName(csvName: string, coachList: string[]): string | null {
   const normalized = normalizeCoachName(csvName);

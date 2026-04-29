@@ -6,6 +6,8 @@ import type { AssignmentResult } from '../lib/assignParking';
 
 describe('assignParking', () => {
   // 確定版テストデータ（SRS駐車場当番アサイナー_Claude_Code_プロンプト確定版_1.md より）
+  // 注：林和憲は2026-04-27時点でCOACH_ORDERから除外（指導専念）。
+  //     attendanceには互換のため林の出欠も残しているが、アルゴリズムは無視する。
   const testAttendance: Record<string, Record<string, AttendanceStatus>> = {
     '4/5': {
       '塚原匡祐': '◯', '国沢剛': '◯', '岸下和樹': '◯', '堀本和幸': '◯',
@@ -278,5 +280,10 @@ describe('assignDuties（統合）', () => {
   it('VIDEO_COACH_ORDERに林和憲が含まれないこと', () => {
     expect(VIDEO_COACH_ORDER).not.toContain('林和憲');
     expect(VIDEO_COACH_ORDER.length).toBe(10);
+  });
+
+  it('COACH_ORDER（駐車場）にも林和憲が含まれないこと（2026-04-27 〜）', () => {
+    expect(COACH_ORDER).not.toContain('林和憲');
+    expect(COACH_ORDER.length).toBe(10);
   });
 });

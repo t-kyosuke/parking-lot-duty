@@ -3,11 +3,13 @@ import Header from './components/Header';
 import PublicView from './components/PublicView';
 import AdminLogin from './components/AdminLogin';
 import AdminView from './components/AdminView';
-import { migrateIfNeeded } from './lib/storage';
+import { migrateIfNeeded, migrateRemoveHayashi } from './lib/storage';
 import './App.css';
 
 // 旧データ形式がある場合は全リセットする
 migrateIfNeeded();
+// 林さん除外マイグレーション（2026-04-27 導入・1回限り）
+migrateRemoveHayashi();
 
 type AppMode = 'public' | 'login' | 'admin';
 

@@ -1,4 +1,5 @@
-// 当番候補コーチ（この固定順で循環）
+// 当番候補コーチ（この固定順で循環・10名）
+// 林和憲はラグビー経験者で指導専念のため駐車場・ビデオ両方の当番から除外
 export const COACH_ORDER: string[] = [
   '塚原匡祐',
   '国沢剛',
@@ -6,7 +7,6 @@ export const COACH_ORDER: string[] = [
   '堀本和幸',
   '濱田広宣',
   '前里元樹',
-  '林和憲',
   '松木正和',
   '橋戸佑介',
   '河井彩登',
@@ -53,6 +53,7 @@ export const EXCLUDED_COACHES: string[] = [
   '小松原英',
   '植村始',
   '安岡誠司',
+  '林和憲', // ラグビー経験者のため指導専念（2026-04-27 追加）
 ];
 
 // 日程の種別
@@ -199,6 +200,7 @@ export const STORAGE_KEYS = {
   CHANGE_HISTORY: 'srs_change_history',
   ADMIN_PASSWORD: 'srs_admin_password',
   SCHEDULE: 'srs_schedule',
+  MIGRATION_REMOVE_HAYASHI: 'srs_migration_remove_hayashi_v1',
   // 旧キー（マイグレーション検出用）
   _OLD_CUMULATIVE_COUNTS: 'srs_cumulative_counts',
   _OLD_POINTER: 'srs_pointer',
