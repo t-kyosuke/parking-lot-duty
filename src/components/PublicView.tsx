@@ -4,7 +4,7 @@ import type { DayType } from '../lib/constants';
 import { getAllMonthlyData, getSchedule, fetchPublishedData } from '../lib/storage';
 import type { MonthlyData } from '../lib/storage';
 
-const HERO_IMAGES = Array.from({ length: 14 }, (_, i) => `/parking-lot-duty/hero-${i + 1}.jpg`);
+const HERO_IMAGES = Array.from({ length: 21 }, (_, i) => `/parking-lot-duty/hero-${i + 1}.jpg`);
 
 const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) => {
   const [heroImage] = React.useState<string>(
