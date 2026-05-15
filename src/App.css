@@ -174,7 +174,7 @@ body {
   overflow: hidden;
   margin-bottom: 0;
   background-size: cover;
-  background-position: center 20%;
+  background-position: center top;
   box-shadow: var(--shadow-md);
 }
 
