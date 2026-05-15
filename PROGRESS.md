@@ -5,6 +5,10 @@
 - トップページ（閲覧者モード）のランダム背景画像を14枚→21枚に増設
   - 運動会・タッチフット大会の写真7枚を `public/hero-15.jpg`〜`hero-21.jpg` として追加
   - `src/components/PublicView.tsx` の `HERO_IMAGES` 配列長を `length: 14` → `length: 21` に変更
+- スマホ表示でヒーローバナーの顔切れを修正
+  - `src/App.css` の `.hero-banner` の `background-position` を `center 20%` → `center top` に変更
+  - 横長バナー（約360×170px）に3:2比率の写真を `cover` で表示する際、顔（写真上部）が切れる問題が発生していた
+  - `center top` にすることで写真上部が常にバナー上端と揃い、顔が切れなくなる（代わりに足元側がトリミングされる）
 - ビルド成功・ユニットテスト11件全通過
 - mainへpush → GitHub Actionsで自動デプロイ
 ### 補足
