@@ -1,4 +1,4 @@
-import { STORAGE_KEYS, DEFAULT_ADMIN_PASSWORD, COACH_ORDER, VIDEO_COACH_ORDER, DEFAULT_SCHEDULE } from './constants';
+import { STORAGE_KEYS, DEFAULT_ADMIN_PASSWORD, COACH_ORDER, VIDEO_COACH_ORDER, DEFAULT_SCHEDULE, MONTHS } from './constants';
 import type { ScheduleDay, AttendanceStatus } from './constants';
 import type { AssignmentResult } from './assignParking';
 
@@ -201,6 +201,58 @@ export function recalculateCumulativeCounts(): { parking: Record<string, number>
   saveParkingCounts(parking);
   saveVideoCounts(video);
   return { parking, video };
+}
+
+/**
+ * 指定月を割り当てる際に「入力として使う累計回数」を返す。
+ *
+ * = 現在の累計（getParkingCounts / getVideoCounts）から、その月の確定済み分を差し引いた値。
+ * これにより：
+ *  - 過去の月の累計はそのまま引き継ぎ
+ *  - 同じ月を割り当て直しても二重カウントにならず
+ *  - 割り当て直前に設定画面で手動調整した回数も反映される
+ */
+export function getCountsForAssignment(
+  selectedMonth: string,
+  type: 'parking' | 'video',
+): Record<string, number> {
+  const base = type === 'parking' ? getParkingCounts() : getVideoCounts();
+  const order = type === 'parking' ? COACH_ORDER : VIDEO_COACH_ORDER;
+  const counts: Record<string, number> = {};
+  for (const c of order) counts[c] = base[c] ?? 0;
+
+  const data = getMonthlyData(selectedMonth);
+  if (data?.confirmed) {
+    for (const a of data.assignments) {
+      const coach = type === 'parking' ? a.coach : a.videoCoach;
+      if (coach && coach in counts) counts[coach] = Math.max(0, counts[coach] - 1);
+    }
+  }
+  return counts;
+}
+
+/**
+ * 指定月より前の「最後に当番した人」を返す（連続防止の起点）。
+ *
+ * 年度の月並び（MONTHS）で、選択月より前の確定済み月を新しい順にたどり、
+ * 最後の（非null）当番者を返す。見つからなければ null。
+ */
+export function getPreviousLastCoach(
+  selectedMonth: string,
+  type: 'parking' | 'video',
+): string | null {
+  const idx = MONTHS.indexOf(selectedMonth);
+  if (idx < 0) return null;
+  const allData = getAllMonthlyData();
+  for (let i = idx - 1; i >= 0; i--) {
+    const data = allData[MONTHS[i]];
+    if (!data?.confirmed || !data.assignments?.length) continue;
+    for (let j = data.assignments.length - 1; j >= 0; j--) {
+      const coach = type === 'parking' ? data.assignments[j].coach : data.assignments[j].videoCoach;
+      if (coach) return coach;
+    }
+  }
+  return null;
 }
 
 // ── ポインタ（駐車場・ビデオ独立、各2ポインタ方式）──

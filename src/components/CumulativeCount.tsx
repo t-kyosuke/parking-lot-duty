@@ -4,21 +4,23 @@ import { COACH_ORDER, VIDEO_COACH_ORDER, COACH_LAST_NAMES } from '../lib/constan
 interface CumulativeCountProps {
   parkingCounts: Record<string, number>;
   videoCounts: Record<string, number>;
-  parkingPointer: number;
-  videoPointer: number;
 }
 
 const CountChart: React.FC<{
   title: string;
   coachOrder: string[];
   counts: Record<string, number>;
-  pointer: number;
-  pointerLabel: string;
-}> = ({ title, coachOrder, counts, pointer, pointerLabel }) => {
+  nextLabel: string;
+}> = ({ title, coachOrder, counts, nextLabel }) => {
   const values = coachOrder.map(c => counts[c] || 0);
   const maxCount = Math.max(...values, 1);
   const minCount = Math.min(...values);
-  const nextCoach = coachOrder[pointer];
+
+  // 次に優先されやすい人 ＝ 累計が最も少ない人（同数なら固定順で先頭）
+  let nextCoach = coachOrder[0];
+  for (const c of coachOrder) {
+    if ((counts[c] || 0) < (counts[nextCoach] || 0)) nextCoach = c;
+  }
 
   return (
     <div className="count-section">
@@ -45,7 +47,7 @@ const CountChart: React.FC<{
         })}
       </div>
       <div className="next-pointer">
-        <span className="next-label">{pointerLabel}</span>
+        <span className="next-label">{nextLabel}</span>
         <span className="next-coach">{nextCoach ? `${COACH_LAST_NAMES[nextCoach]}さん` : '—'}</span>
       </div>
     </div>
@@ -53,7 +55,7 @@ const CountChart: React.FC<{
 };
 
 const CumulativeCount: React.FC<CumulativeCountProps> = ({
-  parkingCounts, videoCounts, parkingPointer, videoPointer,
+  parkingCounts, videoCounts,
 }) => {
   return (
     <div className="cumulative-count">
@@ -62,15 +64,13 @@ const CumulativeCount: React.FC<CumulativeCountProps> = ({
         title="🅿️ 駐車場当番"
         coachOrder={COACH_ORDER}
         counts={parkingCounts}
-        pointer={parkingPointer}
-        pointerLabel="次回の駐車場先頭候補："
+        nextLabel="次に優先されやすい人（回数が最少）："
       />
       <CountChart
         title="🎥 ビデオ当番"
         coachOrder={VIDEO_COACH_ORDER}
         counts={videoCounts}
-        pointer={videoPointer}
-        pointerLabel="次回のビデオ先頭候補："
+        nextLabel="次に優先されやすい人（回数が最少）："
       />
     </div>
   );

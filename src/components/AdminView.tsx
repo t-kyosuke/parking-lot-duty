@@ -6,8 +6,7 @@ import type { AssignmentResult } from '../lib/assignParking';
 import type { ParsedCsvData } from '../lib/parseCsv';
 import {
   getMonthlyData, saveMonthlyData,
-  getParkingPointerState, saveParkingPointerState,
-  getVideoPointerState, saveVideoPointerState,
+  getCountsForAssignment, getPreviousLastCoach,
   getParkingCounts, getVideoCounts, recalculateCumulativeCounts,
   getSchedule, saveSchedule,
   getGithubToken, publishToGithub,
@@ -102,13 +101,16 @@ const AdminView: React.FC = () => {
       .filter(d => d.type === 'practice' || d.type === 'special')
       .map(d => ({ date: d.date, dayOfWeek: d.dayOfWeek, practiceTime: d.practiceTime }));
 
-    const parkingPtr = getParkingPointerState();
-    const videoPtr = getVideoPointerState();
+    // 過去から引き継ぐ累計（この月の確定分は除外）と、直前の当番者（連続防止の起点）
+    const parkingCounts = getCountsForAssignment(selectedMonth, 'parking');
+    const videoCounts = getCountsForAssignment(selectedMonth, 'video');
+    const parkingLast = getPreviousLastCoach(selectedMonth, 'parking');
+    const videoLast = getPreviousLastCoach(selectedMonth, 'video');
 
-    const { results, parkingNextPointer, parkingNextSearchFrom, videoNextPointer, videoNextSearchFrom } = assignDuties(
+    const { results } = assignDuties(
       practiceDays, confirmedAttendance,
-      parkingPtr.owed, parkingPtr.searchFrom,
-      videoPtr.owed, videoPtr.searchFrom,
+      parkingCounts, videoCounts,
+      parkingLast, videoLast,
       COACH_ORDER, VIDEO_COACH_ORDER,
     );
 
@@ -126,8 +128,6 @@ const AdminView: React.FC = () => {
     };
 
     saveMonthlyData(selectedMonth, monthData);
-    saveParkingPointerState(parkingNextPointer, parkingNextSearchFrom);
-    saveVideoPointerState(videoNextPointer, videoNextSearchFrom);
     recalculateCumulativeCounts();
     setAssignments(monthData);
     setRefreshKey(k => k + 1);
@@ -167,8 +167,6 @@ const AdminView: React.FC = () => {
   const displayAssignments = confirmedAttendance ? assignments : (assignments || savedData);
   const parkingCounts = getParkingCounts();
   const videoCounts = getVideoCounts();
-  const parkingPointer = getParkingPointerState().owed;
-  const videoPointer = getVideoPointerState().owed;
 
   return (
     <div className="admin-view">
@@ -248,8 +246,6 @@ const AdminView: React.FC = () => {
               <CumulativeCount
                 parkingCounts={parkingCounts}
                 videoCounts={videoCounts}
-                parkingPointer={parkingPointer}
-                videoPointer={videoPointer}
               />
 
               <div className="publish-section">

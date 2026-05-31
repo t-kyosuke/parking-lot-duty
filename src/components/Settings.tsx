@@ -3,8 +3,6 @@ import { COACH_ORDER, VIDEO_COACH_ORDER, COACH_LAST_NAMES } from '../lib/constan
 import {
   getParkingCounts, saveParkingCounts,
   getVideoCounts, saveVideoCounts,
-  getParkingPointer, saveParkingPointer,
-  getVideoPointer, saveVideoPointer,
   saveAdminPassword,
   exportAllData, importAllData, resetAllData,
   getGithubToken, saveGithubToken,
@@ -15,8 +13,6 @@ interface SettingsProps {
 }
 
 const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
-  const [parkingPointer, setParkingPointer] = useState(getParkingPointer());
-  const [videoPointer, setVideoPointer] = useState(getVideoPointer());
   const [parkingCounts, setParkingCounts] = useState(getParkingCounts());
   const [videoCounts, setVideoCounts] = useState(getVideoCounts());
 
@@ -27,20 +23,6 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2500);
-  };
-
-  const handleParkingPointerChange = (val: number) => {
-    setParkingPointer(val);
-    saveParkingPointer(val);
-    onDataChange();
-    showToast('駐車場の次回開始位置を更新しました');
-  };
-
-  const handleVideoPointerChange = (val: number) => {
-    setVideoPointer(val);
-    saveVideoPointer(val);
-    onDataChange();
-    showToast('ビデオの次回開始位置を更新しました');
   };
 
   const handleParkingCountChange = (coach: string, value: number) => {
@@ -93,8 +75,6 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
         importAllData(reader.result as string);
         onDataChange();
         showToast('データをインポートしました');
-        setParkingPointer(getParkingPointer());
-        setVideoPointer(getVideoPointer());
         setParkingCounts(getParkingCounts());
         setVideoCounts(getVideoCounts());
       } catch {
@@ -108,8 +88,6 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
     if (window.confirm('全データを削除してリセットしますか？この操作は取り消せません。')) {
       resetAllData();
       onDataChange();
-      setParkingPointer(0);
-      setVideoPointer(0);
       setParkingCounts({});
       setVideoCounts({});
       showToast('全データをリセットしました');
@@ -142,41 +120,10 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
         )}
       </div>
 
-      {/* 駐車場：次回開始位置 */}
-      <div className="settings-section">
-        <h3 className="section-title">🅿️ 駐車場当番 - 次回開始位置</h3>
-        <select
-          className="settings-select"
-          value={parkingPointer}
-          onChange={(e) => handleParkingPointerChange(Number(e.target.value))}
-        >
-          {COACH_ORDER.map((coach, idx) => (
-            <option key={coach} value={idx}>
-              {COACH_LAST_NAMES[coach]}さん（{idx + 1}番目）
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* ビデオ：次回開始位置 */}
-      <div className="settings-section">
-        <h3 className="section-title">🎥 ビデオ当番 - 次回開始位置</h3>
-        <select
-          className="settings-select"
-          value={videoPointer}
-          onChange={(e) => handleVideoPointerChange(Number(e.target.value))}
-        >
-          {VIDEO_COACH_ORDER.map((coach, idx) => (
-            <option key={coach} value={idx}>
-              {COACH_LAST_NAMES[coach]}さん（{idx + 1}番目）
-            </option>
-          ))}
-        </select>
-      </div>
-
       {/* 駐車場：累計回数 */}
       <div className="settings-section">
         <h3 className="section-title">🅿️ 駐車場当番 - 累計回数の調整</h3>
+        <p className="settings-desc">💡 当番は「回数が一番少ない人」から優先して割り当てられます。誰かを次に優先したいときは、その人の回数を減らしてください。</p>
         <div className="count-edit-grid">
           {COACH_ORDER.map(coach => (
             <div key={coach} className="count-edit-row">
@@ -200,6 +147,7 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
       {/* ビデオ：累計回数 */}
       <div className="settings-section">
         <h3 className="section-title">🎥 ビデオ当番 - 累計回数の調整</h3>
+        <p className="settings-desc">💡 ビデオも「回数が一番少ない人」から優先されます。回数を減らすとその人が次に選ばれやすくなります。</p>
         <div className="count-edit-grid">
           {VIDEO_COACH_ORDER.map(coach => (
             <div key={coach} className="count-edit-row">
