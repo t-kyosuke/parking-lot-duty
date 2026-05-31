@@ -255,7 +255,7 @@ export function getPreviousLastCoach(
   return null;
 }
 
-// ── ポインタ（駐車場・ビデオ独立、各2ポインタ方式）──
+// ── ポインタ状態（旧方式の名残・現在は export/import と過去マイグレーションの互換用のみ）──
 
 export interface PointerState {
   owed: number;       // 次回先頭候補（借り越し中の人）
@@ -270,28 +270,12 @@ export function saveParkingPointerState(owed: number, searchFrom: number): void 
   setItem(STORAGE_KEYS.PARKING_POINTER, { owed, searchFrom });
 }
 
-export function getParkingPointer(): number {
-  return getParkingPointerState().owed;
-}
-
-export function saveParkingPointer(pointer: number): void {
-  saveParkingPointerState(pointer, pointer);
-}
-
 export function getVideoPointerState(): PointerState {
   return getItem<PointerState>(STORAGE_KEYS.VIDEO_POINTER, { owed: 0, searchFrom: 0 });
 }
 
 export function saveVideoPointerState(owed: number, searchFrom: number): void {
   setItem(STORAGE_KEYS.VIDEO_POINTER, { owed, searchFrom });
-}
-
-export function getVideoPointer(): number {
-  return getVideoPointerState().owed;
-}
-
-export function saveVideoPointer(pointer: number): void {
-  saveVideoPointerState(pointer, pointer);
 }
 
 // ── 変更履歴 ──
