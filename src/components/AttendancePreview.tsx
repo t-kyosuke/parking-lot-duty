@@ -94,11 +94,11 @@ const AttendancePreview: React.FC<AttendancePreviewProps> = ({ csvData, schedule
           </thead>
           <tbody>
             {schedule
-              .filter(d => d.type === 'practice' || d.type === 'special')
+              .filter(d => d.type === 'practice' || d.type === 'special' || d.type === 'match')
               .map(day => (
-                <tr key={day.date}>
+                <tr key={day.date} className={day.type === 'match' ? 'attendance-row-match' : ''}>
                   <td className="sticky-col date-cell">
-                    {day.date}({day.dayOfWeek})
+                    {day.date}({day.dayOfWeek}){day.type === 'match' ? ' ⚽' : ''}
                   </td>
                   {COACH_ORDER.map(coach => {
                     const status = attendance[day.date]?.[coach] || '△';
@@ -118,7 +118,7 @@ const AttendancePreview: React.FC<AttendancePreviewProps> = ({ csvData, schedule
         </table>
       </div>
 
-      <p className="help-text">※ セルをタップして ◯→△→× を切り替えられます</p>
+      <p className="help-text">※ セルをタップして ◯→△→× を切り替えられます（⚽は試合日。カゴ当番は試合に来られる◯の人から選ばれます）</p>
 
       <button
         className="btn btn-primary btn-lg"

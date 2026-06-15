@@ -42,6 +42,20 @@ export const VIDEO_COACH_ORDER: string[] = [
   '大串洋尚',
 ];
 
+// カゴ当番候補コーチ（試合日にカゴを試合会場へ持っていく当番・駐車場/ビデオと同じ10名）
+export const KAGO_COACH_ORDER: string[] = [
+  '塚原匡祐',
+  '国沢剛',
+  '岸下和樹',
+  '堀本和幸',
+  '濱田広宣',
+  '前里元樹',
+  '松木正和',
+  '橋戸佑介',
+  '河井彩登',
+  '大串洋尚',
+];
+
 // 除外コーチ（駐車場当番にアサインしない）
 export const EXCLUDED_COACHES: string[] = [
   '茂木隼人',
@@ -195,6 +209,7 @@ export const STORAGE_KEYS = {
   COACH_CONFIG: 'srs_coach_config',
   PARKING_COUNTS: 'srs_parking_counts',
   VIDEO_COUNTS: 'srs_video_counts',
+  KAGO_COUNTS: 'srs_kago_counts',
   PARKING_POINTER: 'srs_parking_pointer',
   VIDEO_POINTER: 'srs_video_pointer',
   CHANGE_HISTORY: 'srs_change_history',

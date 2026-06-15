@@ -1,13 +1,13 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { MONTHS, COACH_ORDER, VIDEO_COACH_ORDER, DEFAULT_SCHEDULE } from '../lib/constants';
+import { MONTHS, COACH_ORDER, VIDEO_COACH_ORDER, KAGO_COACH_ORDER, DEFAULT_SCHEDULE } from '../lib/constants';
 import type { AttendanceStatus, DayType } from '../lib/constants';
-import { assignDuties } from '../lib/assignParking';
+import { assignDuties, assignKagoDuties } from '../lib/assignParking';
 import type { AssignmentResult } from '../lib/assignParking';
 import type { ParsedCsvData } from '../lib/parseCsv';
 import {
   getMonthlyData, saveMonthlyData,
   getCountsForAssignment, getPreviousLastCoach,
-  getParkingCounts, getVideoCounts, recalculateCumulativeCounts,
+  getParkingCounts, getVideoCounts, getKagoCounts, recalculateCumulativeCounts,
   getSchedule, saveSchedule,
   getGithubToken, publishToGithub,
 } from '../lib/storage';
@@ -101,18 +101,38 @@ const AdminView: React.FC = () => {
       .filter(d => d.type === 'practice' || d.type === 'special')
       .map(d => ({ date: d.date, dayOfWeek: d.dayOfWeek, practiceTime: d.practiceTime }));
 
+    // 試合の日を対象（カゴ当番。曜日は問わない）
+    const matchDays = confirmedSchedule
+      .filter(d => d.type === 'match')
+      .map(d => ({ date: d.date, dayOfWeek: d.dayOfWeek, practiceTime: d.practiceTime }));
+
     // 過去から引き継ぐ累計（この月の確定分は除外）と、直前の当番者（連続防止の起点）
     const parkingCounts = getCountsForAssignment(selectedMonth, 'parking');
     const videoCounts = getCountsForAssignment(selectedMonth, 'video');
+    const kagoCounts = getCountsForAssignment(selectedMonth, 'kago');
     const parkingLast = getPreviousLastCoach(selectedMonth, 'parking');
     const videoLast = getPreviousLastCoach(selectedMonth, 'video');
+    const kagoLast = getPreviousLastCoach(selectedMonth, 'kago');
 
-    const { results } = assignDuties(
+    const { results: pvResults } = assignDuties(
       practiceDays, confirmedAttendance,
       parkingCounts, videoCounts,
       parkingLast, videoLast,
       COACH_ORDER, VIDEO_COACH_ORDER,
     );
+
+    const { results: kagoResults } = assignKagoDuties(
+      matchDays, confirmedAttendance,
+      kagoCounts, kagoLast,
+      KAGO_COACH_ORDER,
+    );
+
+    // 練習日（駐車場・ビデオ）と試合日（カゴ）の結果を結合し、日付（M/D）順に並べ替える
+    const results = [...pvResults, ...kagoResults].sort((a, b) => {
+      const [am, ad] = a.date.split('/').map(Number);
+      const [bm, bd] = b.date.split('/').map(Number);
+      return am !== bm ? am - bm : ad - bd;
+    });
 
     const monthData: MonthlyData = {
       month: selectedMonth,
@@ -167,6 +187,7 @@ const AdminView: React.FC = () => {
   const displayAssignments = confirmedAttendance ? assignments : (assignments || savedData);
   const parkingCounts = getParkingCounts();
   const videoCounts = getVideoCounts();
+  const kagoCounts = getKagoCounts();
 
   return (
     <div className="admin-view">
@@ -246,6 +267,7 @@ const AdminView: React.FC = () => {
               <CumulativeCount
                 parkingCounts={parkingCounts}
                 videoCounts={videoCounts}
+                kagoCounts={kagoCounts}
               />
 
               <div className="publish-section">

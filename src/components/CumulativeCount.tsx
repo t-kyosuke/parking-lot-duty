@@ -1,9 +1,10 @@
 import React from 'react';
-import { COACH_ORDER, VIDEO_COACH_ORDER, COACH_LAST_NAMES } from '../lib/constants';
+import { COACH_ORDER, VIDEO_COACH_ORDER, KAGO_COACH_ORDER, COACH_LAST_NAMES } from '../lib/constants';
 
 interface CumulativeCountProps {
   parkingCounts: Record<string, number>;
   videoCounts: Record<string, number>;
+  kagoCounts: Record<string, number>;
 }
 
 const CountChart: React.FC<{
@@ -55,7 +56,7 @@ const CountChart: React.FC<{
 };
 
 const CumulativeCount: React.FC<CumulativeCountProps> = ({
-  parkingCounts, videoCounts,
+  parkingCounts, videoCounts, kagoCounts,
 }) => {
   return (
     <div className="cumulative-count">
@@ -70,6 +71,12 @@ const CumulativeCount: React.FC<CumulativeCountProps> = ({
         title="🎥 ビデオ当番"
         coachOrder={VIDEO_COACH_ORDER}
         counts={videoCounts}
+        nextLabel="次に優先されやすい人（回数が最少）："
+      />
+      <CountChart
+        title="🧺 カゴ当番（試合日）"
+        coachOrder={KAGO_COACH_ORDER}
+        counts={kagoCounts}
         nextLabel="次に優先されやすい人（回数が最少）："
       />
     </div>

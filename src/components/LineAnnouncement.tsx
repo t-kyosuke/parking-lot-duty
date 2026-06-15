@@ -12,8 +12,8 @@ const LineAnnouncement: React.FC<LineAnnouncementProps> = ({ results, month }) =
 
   const monthNum = month.replace('月', '');
 
-  // 当番がある日のみ（駐車場またはビデオのどちらかがアサインされている日）
-  const assignedDays = results.filter(r => r.coach || r.videoCoach);
+  // 当番がある日のみ（駐車場・ビデオ・カゴのいずれかがアサインされている日）
+  const assignedDays = results.filter(r => r.coach || r.videoCoach || r.kagoCoach);
 
   const DOW_MAP: Record<string, string> = {
     '日': '日曜日', '月': '月曜日', '火': '火曜日', '水': '水曜日',
@@ -29,6 +29,10 @@ ${assignedDays.map(r => {
     const m = parts[0];
     const d = parts[1];
     const dow = DOW_MAP[r.dayOfWeek] || r.dayOfWeek;
+    if (r.isMatch) {
+      const kagoName = r.kagoCoach ? `${COACH_LAST_NAMES[r.kagoCoach] || r.kagoCoach}さん` : '未定';
+      return `${m}月${d}日（${dow}）⚽試合：🧺カゴ▶${kagoName}`;
+    }
     const parkingName = r.isSaturday ? '-' : (r.coach ? `${COACH_LAST_NAMES[r.coach] || r.coach}さん` : '未定');
     const videoName = r.videoCoach ? `${COACH_LAST_NAMES[r.videoCoach] || r.videoCoach}さん` : '未定';
     return `${m}月${d}日（${dow}）：駐車場▶${parkingName}　/　ビデオ▶${videoName}`;

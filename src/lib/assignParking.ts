@@ -1,13 +1,15 @@
-import { COACH_ORDER, VIDEO_COACH_ORDER } from './constants';
+import { COACH_ORDER, VIDEO_COACH_ORDER, KAGO_COACH_ORDER } from './constants';
 import type { AttendanceStatus } from './constants';
 
 export interface AssignmentResult {
   date: string;
   dayOfWeek: string;
-  coach: string | null;       // 駐車場当番（土曜は null）
-  videoCoach: string | null;  // ビデオ当番
+  coach: string | null;       // 駐車場当番（土曜・試合日は null）
+  videoCoach: string | null;  // ビデオ当番（試合日は null）
+  kagoCoach: string | null;   // カゴ当番（試合日のみ。練習日は null）
   practiceTime: string;
   isSaturday: boolean;
+  isMatch: boolean;           // 試合日かどうか（表示の出し分け用）
 }
 
 export interface DutyAssignmentOutput {
@@ -141,8 +143,10 @@ export function assignDuties(
       dayOfWeek: day.dayOfWeek,
       coach,
       videoCoach,
+      kagoCoach: null,   // 練習日はカゴ当番なし
       practiceTime: day.practiceTime,
       isSaturday,
+      isMatch: false,
     });
   }
 
@@ -152,5 +156,76 @@ export function assignDuties(
     videoCounts: vCounts,
     parkingLastCoach: pLast,
     videoLastCoach: vLast,
+  };
+}
+
+export interface KagoAssignmentOutput {
+  results: AssignmentResult[];
+  kagoCounts: Record<string, number>; // 割り当て後の累計（カゴ）
+  kagoLastCoach: string | null;        // 最後のカゴ当番者（次の連続防止の起点）
+}
+
+/**
+ * 試合日の「カゴ当番」を「累計回数が少ない人を優先」で割り当てる。
+ *
+ * カゴ当番 ＝ 試合前の最後の練習でカゴを預かり、試合当日に試合会場へ持っていく役割。
+ * - 対象は試合日（type === 'match'）のみ。曜日は問わない（土曜の試合でも割り当てる）。
+ * - 駐車場・ビデオとは独立した累計でカウントする。
+ * - 出席（◯）している人の中から累計最少を選び、直前のカゴ当番者は連続を避ける。
+ * - 累計は引数で引き継ぎ、1人割り当てるたびに加算していく。
+ *
+ * @param matchDays    試合日（date / dayOfWeek / practiceTime）
+ * @param attendance   出欠（日付→コーチ→記号）。試合日の出欠を使う。
+ * @param kagoCounts   カゴのこれまでの累計（この呼び出しで加算される）
+ * @param kagoLastCoach 直前のカゴ当番者（前の試合の人など。連続防止の起点）
+ * @param kagoOrder    カゴ当番候補（既定 KAGO_COACH_ORDER）
+ * @param kagoMonthlyLimit 1か月あたり上限（既定 DEFAULT_MONTHLY_LIMIT。試合は月数回なので実質的にはほぼ効かない）
+ */
+export function assignKagoDuties(
+  matchDays: Array<{ date: string; dayOfWeek: string; practiceTime: string }>,
+  attendance: Record<string, Record<string, AttendanceStatus>>,
+  kagoCounts: Record<string, number>,
+  kagoLastCoach: string | null = null,
+  kagoOrder: string[] = KAGO_COACH_ORDER,
+  kagoMonthlyLimit: number = DEFAULT_MONTHLY_LIMIT,
+): KagoAssignmentOutput {
+  // 累計を複製（引数を壊さない）し、未登録のコーチは 0 で初期化
+  const kCounts: Record<string, number> = {};
+  for (const c of kagoOrder) kCounts[c] = kagoCounts[c] ?? 0;
+
+  // 今月のカゴ当番回数（上限判定用・この月だけのカウント）
+  const kMonthly: Record<string, number> = {};
+  for (const c of kagoOrder) kMonthly[c] = 0;
+
+  let kLast = kagoLastCoach;
+  const results: AssignmentResult[] = [];
+
+  for (const day of matchDays) {
+    const isSaturday = day.dayOfWeek === '土';
+    const dayAtt = attendance[day.date] ?? {};
+
+    const kagoCoach = pickByCount(kagoOrder, kCounts, dayAtt, kLast, null, kMonthly, kagoMonthlyLimit);
+    if (kagoCoach) {
+      kCounts[kagoCoach]++;
+      kMonthly[kagoCoach]++;
+      kLast = kagoCoach;
+    }
+
+    results.push({
+      date: day.date,
+      dayOfWeek: day.dayOfWeek,
+      coach: null,       // 試合日は駐車場・ビデオなし
+      videoCoach: null,
+      kagoCoach,
+      practiceTime: day.practiceTime,
+      isSaturday,
+      isMatch: true,
+    });
+  }
+
+  return {
+    results,
+    kagoCounts: kCounts,
+    kagoLastCoach: kLast,
   };
 }

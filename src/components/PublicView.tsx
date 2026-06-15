@@ -118,6 +118,9 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
               const videoName = assignment?.videoCoach
                 ? COACH_LAST_NAMES[assignment.videoCoach] || assignment.videoCoach
                 : null;
+              const kagoName = assignment?.kagoCoach
+                ? COACH_LAST_NAMES[assignment.kagoCoach] || assignment.kagoCoach
+                : null;
 
               return (
                 <div
@@ -146,6 +149,16 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
                           <span className="duty-line-label">ビデオ▶</span>
                           <span className="duty-line-value">
                             {videoName ? <span className="coach-badge">{videoName}さん</span> : <span className="no-coach">未定</span>}
+                          </span>
+                        </span>
+                      </div>
+                    ) : day.type === 'match' ? (
+                      <div className="duty-display">
+                        <span className="day-type-badge">{getTypeIcon('match')} 試合</span>
+                        <span className="duty-line">
+                          <span className="duty-line-label">🧺カゴ▶</span>
+                          <span className="duty-line-value">
+                            {kagoName ? <span className="coach-badge">{kagoName}さん</span> : <span className="no-coach">未定</span>}
                           </span>
                         </span>
                       </div>

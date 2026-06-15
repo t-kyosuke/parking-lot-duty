@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { assignDuties } from '../lib/assignParking';
-import { COACH_ORDER, VIDEO_COACH_ORDER } from '../lib/constants';
+import { assignDuties, assignKagoDuties } from '../lib/assignParking';
+import { COACH_ORDER, VIDEO_COACH_ORDER, KAGO_COACH_ORDER } from '../lib/constants';
 import type { AttendanceStatus } from '../lib/constants';
 
 // ── テスト用ヘルパー ──
@@ -190,5 +190,88 @@ describe('assignDuties（累計が少ない人を優先）', () => {
     expect(VIDEO_COACH_ORDER).not.toContain('林和憲');
     expect(COACH_ORDER.length).toBe(10);
     expect(VIDEO_COACH_ORDER.length).toBe(10);
+  });
+});
+
+describe('assignKagoDuties（試合日のカゴ当番・累計が少ない人を優先）', () => {
+  it('試合日に累計が一番少ない人が選ばれ、駐車場・ビデオは null になること', () => {
+    const kago = zero(KAGO_COACH_ORDER);
+    KAGO_COACH_ORDER.forEach((c) => (kago[c] = 5));
+    kago['国沢剛'] = 0;
+
+    const { results } = assignKagoDuties(days(['4/26']), presentDays(['4/26']), kago);
+    expect(results[0].kagoCoach).toBe('国沢剛');
+    expect(results[0].isMatch).toBe(true);
+    expect(results[0].coach).toBeNull();
+    expect(results[0].videoCoach).toBeNull();
+  });
+
+  it('累計が同じときは固定順の先頭（塚原）が選ばれること', () => {
+    const { results } = assignKagoDuties(days(['4/26']), presentDays(['4/26']), zero(KAGO_COACH_ORDER));
+    expect(results[0].kagoCoach).toBe('塚原匡祐');
+  });
+
+  it('直前のカゴ当番者は連続で選ばれないこと', () => {
+    const { results } = assignKagoDuties(days(['4/26']), presentDays(['4/26']), zero(KAGO_COACH_ORDER), '塚原匡祐');
+    expect(results[0].kagoCoach).toBe('国沢剛');
+  });
+
+  it('累計を引き継いで加算し、連続する試合では別の人に回ること', () => {
+    const ds = ['4/26', '6/14', '6/28'];
+    const { results, kagoCounts, kagoLastCoach } = assignKagoDuties(
+      days(ds), presentDays(ds), zero(KAGO_COACH_ORDER),
+    );
+    expect(results.map((r) => r.kagoCoach)).toEqual(['塚原匡祐', '国沢剛', '岸下和樹']);
+    expect(kagoCounts['塚原匡祐']).toBe(1);
+    expect(kagoCounts['堀本和幸']).toBe(0);
+    expect(kagoLastCoach).toBe('岸下和樹');
+    for (let i = 1; i < results.length; i++) {
+      expect(results[i].kagoCoach).not.toBe(results[i - 1].kagoCoach);
+    }
+  });
+
+  it('全員欠席の試合日はカゴ＝該当者なし（null）になること', () => {
+    const att: Record<string, Record<string, AttendanceStatus>> = { '4/26': {} };
+    KAGO_COACH_ORDER.forEach((c) => (att['4/26'][c] = '×'));
+
+    const { results } = assignKagoDuties(days(['4/26']), att, zero(KAGO_COACH_ORDER));
+    expect(results[0].kagoCoach).toBeNull();
+    expect(results[0].isMatch).toBe(true);
+  });
+
+  it('出席者が少なく候補が尽きる試合日は連続防止を緩めること', () => {
+    const att: Record<string, Record<string, AttendanceStatus>> = { '4/26': {} };
+    KAGO_COACH_ORDER.forEach((c) => (att['4/26'][c] = '×'));
+    att['4/26']['塚原匡祐'] = '◯';
+
+    const { results } = assignKagoDuties(days(['4/26']), att, zero(KAGO_COACH_ORDER), '塚原匡祐');
+    expect(results[0].kagoCoach).toBe('塚原匡祐');
+  });
+
+  it('カゴはカゴ独自の累計で選ばれること（与えた累計が最少の人＝大串が選ばれる）', () => {
+    // 固定順の末尾（大串）だけ累計0、他は高い → 順番ではなく累計で大串が選ばれる
+    const kago = zero(KAGO_COACH_ORDER);
+    KAGO_COACH_ORDER.forEach((c) => (kago[c] = 3));
+    kago['大串洋尚'] = 0;
+
+    const { results } = assignKagoDuties(days(['4/26']), presentDays(['4/26']), kago);
+    expect(results[0].kagoCoach).toBe('大串洋尚');
+  });
+
+  it('試合日を渡さなければカゴ結果は出ず、assignDuties はカゴ＝null／isMatch＝false のままであること', () => {
+    const { results } = assignDuties(
+      days(['4/5']), presentDays(['4/5']),
+      zero(COACH_ORDER), zero(VIDEO_COACH_ORDER),
+    );
+    expect(results[0].kagoCoach).toBeNull();
+    expect(results[0].isMatch).toBe(false);
+
+    const { results: kagoResults } = assignKagoDuties([], {}, zero(KAGO_COACH_ORDER));
+    expect(kagoResults).toEqual([]);
+  });
+
+  it('カゴ当番候補も10名で林和憲を含まないこと', () => {
+    expect(KAGO_COACH_ORDER).not.toContain('林和憲');
+    expect(KAGO_COACH_ORDER.length).toBe(10);
   });
 });

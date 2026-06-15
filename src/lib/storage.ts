@@ -1,4 +1,4 @@
-import { STORAGE_KEYS, DEFAULT_ADMIN_PASSWORD, COACH_ORDER, VIDEO_COACH_ORDER, DEFAULT_SCHEDULE, MONTHS } from './constants';
+import { STORAGE_KEYS, DEFAULT_ADMIN_PASSWORD, COACH_ORDER, VIDEO_COACH_ORDER, KAGO_COACH_ORDER, DEFAULT_SCHEDULE, MONTHS } from './constants';
 import type { ScheduleDay, AttendanceStatus } from './constants';
 import type { AssignmentResult } from './assignParking';
 
@@ -22,7 +22,7 @@ export interface ChangeHistoryEntry {
   month: string;
   originalCoach: string;
   newCoach: string;
-  dutyType: 'parking' | 'video';
+  dutyType: 'parking' | 'video' | 'kago';
   changedAt: string;
 }
 
@@ -174,16 +174,28 @@ export function saveVideoCounts(counts: Record<string, number>): void {
   setItem(STORAGE_KEYS.VIDEO_COUNTS, counts);
 }
 
-export function recalculateCumulativeCounts(): { parking: Record<string, number>; video: Record<string, number> } {
+export function getKagoCounts(): Record<string, number> {
+  return getItem<Record<string, number>>(STORAGE_KEYS.KAGO_COUNTS, {});
+}
+
+export function saveKagoCounts(counts: Record<string, number>): void {
+  setItem(STORAGE_KEYS.KAGO_COUNTS, counts);
+}
+
+export function recalculateCumulativeCounts(): { parking: Record<string, number>; video: Record<string, number>; kago: Record<string, number> } {
   const allData = getAllMonthlyData();
   const parking: Record<string, number> = {};
   const video: Record<string, number> = {};
+  const kago: Record<string, number> = {};
 
   for (const coach of COACH_ORDER) {
     parking[coach] = 0;
   }
   for (const coach of VIDEO_COACH_ORDER) {
     video[coach] = 0;
+  }
+  for (const coach of KAGO_COACH_ORDER) {
+    kago[coach] = 0;
   }
 
   for (const month of Object.values(allData)) {
@@ -195,12 +207,16 @@ export function recalculateCumulativeCounts(): { parking: Record<string, number>
       if (assignment.videoCoach) {
         video[assignment.videoCoach] = (video[assignment.videoCoach] || 0) + 1;
       }
+      if (assignment.kagoCoach) {
+        kago[assignment.kagoCoach] = (kago[assignment.kagoCoach] || 0) + 1;
+      }
     }
   }
 
   saveParkingCounts(parking);
   saveVideoCounts(video);
-  return { parking, video };
+  saveKagoCounts(kago);
+  return { parking, video, kago };
 }
 
 /**
@@ -214,17 +230,17 @@ export function recalculateCumulativeCounts(): { parking: Record<string, number>
  */
 export function getCountsForAssignment(
   selectedMonth: string,
-  type: 'parking' | 'video',
+  type: 'parking' | 'video' | 'kago',
 ): Record<string, number> {
-  const base = type === 'parking' ? getParkingCounts() : getVideoCounts();
-  const order = type === 'parking' ? COACH_ORDER : VIDEO_COACH_ORDER;
+  const base = type === 'parking' ? getParkingCounts() : type === 'video' ? getVideoCounts() : getKagoCounts();
+  const order = type === 'parking' ? COACH_ORDER : type === 'video' ? VIDEO_COACH_ORDER : KAGO_COACH_ORDER;
   const counts: Record<string, number> = {};
   for (const c of order) counts[c] = base[c] ?? 0;
 
   const data = getMonthlyData(selectedMonth);
   if (data?.confirmed) {
     for (const a of data.assignments) {
-      const coach = type === 'parking' ? a.coach : a.videoCoach;
+      const coach = type === 'parking' ? a.coach : type === 'video' ? a.videoCoach : a.kagoCoach;
       if (coach && coach in counts) counts[coach] = Math.max(0, counts[coach] - 1);
     }
   }
@@ -239,7 +255,7 @@ export function getCountsForAssignment(
  */
 export function getPreviousLastCoach(
   selectedMonth: string,
-  type: 'parking' | 'video',
+  type: 'parking' | 'video' | 'kago',
 ): string | null {
   const idx = MONTHS.indexOf(selectedMonth);
   if (idx < 0) return null;
@@ -248,7 +264,8 @@ export function getPreviousLastCoach(
     const data = allData[MONTHS[i]];
     if (!data?.confirmed || !data.assignments?.length) continue;
     for (let j = data.assignments.length - 1; j >= 0; j--) {
-      const coach = type === 'parking' ? data.assignments[j].coach : data.assignments[j].videoCoach;
+      const a = data.assignments[j];
+      const coach = type === 'parking' ? a.coach : type === 'video' ? a.videoCoach : a.kagoCoach;
       if (coach) return coach;
     }
   }
@@ -331,6 +348,7 @@ export function exportAllData(): string {
     coachConfig: getCoachConfig(),
     parkingCounts: getParkingCounts(),
     videoCounts: getVideoCounts(),
+    kagoCounts: getKagoCounts(),
     parkingPointer: getParkingPointerState(),
     videoPointer: getVideoPointerState(),
     changeHistory: getChangeHistory(),
@@ -348,6 +366,7 @@ export function importAllData(jsonString: string): void {
     if (data.coachConfig) setItem(STORAGE_KEYS.COACH_CONFIG, data.coachConfig);
     if (data.parkingCounts) setItem(STORAGE_KEYS.PARKING_COUNTS, data.parkingCounts);
     if (data.videoCounts) setItem(STORAGE_KEYS.VIDEO_COUNTS, data.videoCounts);
+    if (data.kagoCounts) setItem(STORAGE_KEYS.KAGO_COUNTS, data.kagoCounts);
     if (data.parkingPointer) setItem(STORAGE_KEYS.PARKING_POINTER, data.parkingPointer);
     if (data.videoPointer) setItem(STORAGE_KEYS.VIDEO_POINTER, data.videoPointer);
     if (data.changeHistory) setItem(STORAGE_KEYS.CHANGE_HISTORY, data.changeHistory);

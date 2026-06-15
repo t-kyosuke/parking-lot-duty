@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { COACH_ORDER, VIDEO_COACH_ORDER, COACH_LAST_NAMES } from '../lib/constants';
+import { COACH_ORDER, VIDEO_COACH_ORDER, KAGO_COACH_ORDER, COACH_LAST_NAMES } from '../lib/constants';
 import {
   getParkingCounts, saveParkingCounts,
   getVideoCounts, saveVideoCounts,
+  getKagoCounts, saveKagoCounts,
   saveAdminPassword,
   exportAllData, importAllData, resetAllData,
   getGithubToken, saveGithubToken,
@@ -15,6 +16,7 @@ interface SettingsProps {
 const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
   const [parkingCounts, setParkingCounts] = useState(getParkingCounts());
   const [videoCounts, setVideoCounts] = useState(getVideoCounts());
+  const [kagoCounts, setKagoCounts] = useState(getKagoCounts());
 
   const [newPassword, setNewPassword] = useState('');
   const [githubToken, setGithubToken] = useState(getGithubToken());
@@ -36,6 +38,13 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
     const newCounts = { ...videoCounts, [coach]: Math.max(0, value) };
     setVideoCounts(newCounts);
     saveVideoCounts(newCounts);
+    onDataChange();
+  };
+
+  const handleKagoCountChange = (coach: string, value: number) => {
+    const newCounts = { ...kagoCounts, [coach]: Math.max(0, value) };
+    setKagoCounts(newCounts);
+    saveKagoCounts(newCounts);
     onDataChange();
   };
 
@@ -77,6 +86,7 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
         showToast('データをインポートしました');
         setParkingCounts(getParkingCounts());
         setVideoCounts(getVideoCounts());
+        setKagoCounts(getKagoCounts());
       } catch {
         showToast('インポートに失敗しました');
       }
@@ -90,6 +100,7 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
       onDataChange();
       setParkingCounts({});
       setVideoCounts({});
+      setKagoCounts({});
       showToast('全データをリセットしました');
       // ページを再読み込みして確実にクリーンな状態にする
       setTimeout(() => window.location.reload(), 500);
@@ -161,6 +172,30 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
                 <button
                   className="btn btn-xs"
                   onClick={() => handleVideoCountChange(coach, (videoCounts[coach] || 0) + 1)}
+                >+</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* カゴ：累計回数 */}
+      <div className="settings-section">
+        <h3 className="section-title">🧺 カゴ当番（試合日） - 累計回数の調整</h3>
+        <p className="settings-desc">💡 試合日のカゴ当番も「回数が一番少ない人」から優先されます。これまで善意でやってくれた実績を反映したいときは、その人の回数を増やしてください（最初は全員0回スタートです）。</p>
+        <div className="count-edit-grid">
+          {KAGO_COACH_ORDER.map(coach => (
+            <div key={coach} className="count-edit-row">
+              <span>{COACH_LAST_NAMES[coach]}</span>
+              <div className="count-edit-controls">
+                <button
+                  className="btn btn-xs"
+                  onClick={() => handleKagoCountChange(coach, (kagoCounts[coach] || 0) - 1)}
+                >−</button>
+                <span className="count-edit-num">{kagoCounts[coach] || 0}</span>
+                <button
+                  className="btn btn-xs"
+                  onClick={() => handleKagoCountChange(coach, (kagoCounts[coach] || 0) + 1)}
                 >+</button>
               </div>
             </div>
