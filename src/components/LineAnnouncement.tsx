@@ -12,8 +12,9 @@ const LineAnnouncement: React.FC<LineAnnouncementProps> = ({ results, month }) =
 
   const monthNum = month.replace('月', '');
 
-  // 当番がある日のみ（駐車場・ビデオ・カゴのいずれかがアサインされている日）
-  const assignedDays = results.filter(r => r.coach || r.videoCoach || r.kagoCoach);
+  // 当番がある日のみ（駐車場・ビデオ・カゴのいずれか）。
+  // 試合日(isMatch)はカゴが未定でも「🧺カゴ▶未定」として必ず出す（結果・閲覧画面と揃える）
+  const assignedDays = results.filter(r => r.coach || r.videoCoach || r.kagoCoach || r.isMatch);
 
   const DOW_MAP: Record<string, string> = {
     '日': '日曜日', '月': '月曜日', '火': '火曜日', '水': '水曜日',

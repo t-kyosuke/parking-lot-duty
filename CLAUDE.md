@@ -325,7 +325,7 @@ tyuusyazyoutouban/
 │   │   ├── parseCsv.ts          # CSVパーサー
 │   │   └── storage.ts           # localStorage操作
 │   └── __tests__/
-│       └── assignParking.test.ts # ユニットテスト（3テスト）
+│       └── assignParking.test.ts # 性質ベーステスト 全21件（駐車場・ビデオ12＋カゴ9）
 ├── dist/                         # ビルド出力先
 └── public/
 ```
@@ -336,7 +336,7 @@ tyuusyazyoutouban/
 
 ### ✅ 完了済み
 - 全コンポーネント・ライブラリ実装済み
-- ユニットテスト 3件全通過（`npm run test`）
+- ユニットテスト 21件全通過（`npm run test`）
 - 本番ビルド成功（`npm run build`）
 - ブラウザで閲覧者モード表示確認済み（コンソールエラーなし）
 

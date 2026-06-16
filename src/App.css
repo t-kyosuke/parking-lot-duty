@@ -1018,6 +1018,12 @@ body {
   color: var(--text);
 }
 
+/* 試合日（カゴ当番）の行：出欠表で日付セルを強調（◯/△/×セルの色は触らない） */
+.attendance-table tr.attendance-row-match .date-cell {
+  background: var(--maybe-bg);
+  border-left: 4px solid var(--yellow-dark);
+}
+
 .attendance-cell {
   cursor: pointer;
   font-size: 0.95rem;
