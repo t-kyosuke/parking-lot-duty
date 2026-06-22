@@ -74,7 +74,7 @@ const CumulativeCount: React.FC<CumulativeCountProps> = ({
         nextLabel="次に優先されやすい人（回数が最少）："
       />
       <CountChart
-        title="🧺 カゴ当番（試合日）"
+        title="🧺 カゴ当番"
         coachOrder={KAGO_COACH_ORDER}
         counts={kagoCounts}
         nextLabel="次に優先されやすい人（回数が最少）："

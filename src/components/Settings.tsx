@@ -181,8 +181,8 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
 
       {/* カゴ：累計回数 */}
       <div className="settings-section">
-        <h3 className="section-title">🧺 カゴ当番（試合日） - 累計回数の調整</h3>
-        <p className="settings-desc">💡 試合日のカゴ当番も「回数が一番少ない人」から優先されます。これまで善意でやってくれた実績を反映したいときは、その人の回数を増やしてください（最初は全員0回スタートです）。</p>
+        <h3 className="section-title">🧺 カゴ当番 - 累計回数の調整</h3>
+        <p className="settings-desc">💡 カゴ係（土曜練習も含む全セッションの運び役。日曜の駐車場当番がそのまま運ぶ日・要確認の日は数えません）も「回数が一番少ない人」から優先されます。これまで善意でやってくれた実績を反映したいときは、その人の回数を増やしてください（最初は全員0回スタートです）。</p>
         <div className="count-edit-grid">
           {KAGO_COACH_ORDER.map(coach => (
             <div key={coach} className="count-edit-row">

@@ -253,14 +253,15 @@ export function getCountsForAssignment(
 }
 
 /**
- * 指定月より前の「最後に当番した人」を返す（連続防止の起点）。
+ * 指定月より前の「最後に当番した人」を返す（駐車場・ビデオの連続防止の起点）。
  *
  * 年度の月並び（MONTHS）で、選択月より前の確定済み月を新しい順にたどり、
  * 最後の（非null）当番者を返す。見つからなければ null。
+ * ※カゴの月またぎ起点は holder ベースの `getPreviousKagoSession` を使う（この関数は使わない）。
  */
 export function getPreviousLastCoach(
   selectedMonth: string,
-  type: 'parking' | 'video' | 'kago',
+  type: 'parking' | 'video',
 ): string | null {
   const idx = MONTHS.indexOf(selectedMonth);
   if (idx < 0) return null;
@@ -270,7 +271,7 @@ export function getPreviousLastCoach(
     if (!data?.confirmed || !data.assignments?.length) continue;
     for (let j = data.assignments.length - 1; j >= 0; j--) {
       const a = data.assignments[j];
-      const coach = type === 'parking' ? a.coach : type === 'video' ? a.videoCoach : a.kagoCoach;
+      const coach = type === 'parking' ? a.coach : a.videoCoach;
       if (coach) return coach;
     }
   }
@@ -297,8 +298,11 @@ export function getPreviousKagoSession(
   for (let i = idx - 1; i >= 0; i--) {
     const data = allData[MONTHS[i]];
     if (!data?.confirmed || !data.assignments?.length) continue;
-    // 練習日にもカゴが入っている＝新フォーマット（前回出欠が信頼できる）
-    const isNewFormat = data.assignments.some((a) => !a.isMatch && a.kagoCoach);
+    // 新フォーマット（カゴ連鎖）の月かを、連鎖が必ず付ける新フラグの有無で判定する。
+    // ＝試合のみの月でも前回出欠(attendance)を信頼でき、不要に緩めない。
+    const isNewFormat = data.assignments.some(
+      (a) => a.kagoCarriedByParking !== undefined || a.kagoNeedsConfirm !== undefined,
+    );
     for (let j = data.assignments.length - 1; j >= 0; j--) {
       const a = data.assignments[j];
       if (a.kagoCoach) {

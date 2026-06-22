@@ -118,7 +118,7 @@ const AttendancePreview: React.FC<AttendancePreviewProps> = ({ csvData, schedule
         </table>
       </div>
 
-      <p className="help-text">※ セルをタップして ◯→△→× を切り替えられます（⚽は試合日。カゴ当番は試合に来られる◯の人から選ばれます）</p>
+      <p className="help-text">※ セルをタップして ◯→△→× を切り替えられます（⚽は試合日。カゴは練習日も含め毎回、前回も来ていた◯の人へ引き継がれます。日曜・祝日の練習は駐車場当番がそのまま運びます）</p>
 
       <button
         className="btn btn-primary btn-lg"
