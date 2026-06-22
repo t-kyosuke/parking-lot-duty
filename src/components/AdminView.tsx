@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { MONTHS, COACH_ORDER, VIDEO_COACH_ORDER, KAGO_COACH_ORDER, DEFAULT_SCHEDULE } from '../lib/constants';
 import type { AttendanceStatus, DayType } from '../lib/constants';
-import { assignDuties, assignKagoDuties } from '../lib/assignParking';
+import { assignDuties, assignKagoChain } from '../lib/assignParking';
 import type { AssignmentResult } from '../lib/assignParking';
 import type { ParsedCsvData } from '../lib/parseCsv';
 import {
   getMonthlyData, saveMonthlyData,
-  getCountsForAssignment, getPreviousLastCoach,
+  getCountsForAssignment, getPreviousLastCoach, getPreviousKagoSession,
   getParkingCounts, getVideoCounts, getKagoCounts, recalculateCumulativeCounts,
   getSchedule, saveSchedule,
   getGithubToken, publishToGithub,
@@ -96,14 +96,15 @@ const AdminView: React.FC = () => {
   const handleAssign = useCallback(() => {
     if (!confirmedAttendance || !confirmedSchedule) return;
 
-    // 練習・運動会等の日を対象（土曜日も含む）
+    const byDate = (a: { date: string }, b: { date: string }) => {
+      const [am, ad] = a.date.split('/').map(Number);
+      const [bm, bd] = b.date.split('/').map(Number);
+      return am !== bm ? am - bm : ad - bd;
+    };
+
+    // 駐車場・ビデオ：練習・運動会等の日（土曜も含む）。※ここは従来どおり・カゴで変えない
     const practiceDays = confirmedSchedule
       .filter(d => d.type === 'practice' || d.type === 'special')
-      .map(d => ({ date: d.date, dayOfWeek: d.dayOfWeek, practiceTime: d.practiceTime }));
-
-    // 試合の日を対象（カゴ当番。曜日は問わない）
-    const matchDays = confirmedSchedule
-      .filter(d => d.type === 'match')
       .map(d => ({ date: d.date, dayOfWeek: d.dayOfWeek, practiceTime: d.practiceTime }));
 
     // 過去から引き継ぐ累計（この月の確定分は除外）と、直前の当番者（連続防止の起点）
@@ -112,27 +113,47 @@ const AdminView: React.FC = () => {
     const kagoCounts = getCountsForAssignment(selectedMonth, 'kago');
     const parkingLast = getPreviousLastCoach(selectedMonth, 'parking');
     const videoLast = getPreviousLastCoach(selectedMonth, 'video');
-    const kagoLast = getPreviousLastCoach(selectedMonth, 'kago');
 
+    // ① 駐車場・ビデオを先に確定（カゴはこの結果を読むだけ＝一方通行で公平さを崩さない）
     const { results: pvResults } = assignDuties(
       practiceDays, confirmedAttendance,
       parkingCounts, videoCounts,
       parkingLast, videoLast,
       COACH_ORDER, VIDEO_COACH_ORDER,
     );
+    const pvByDate = new Map(pvResults.map(r => [r.date, r]));
 
-    const { results: kagoResults } = assignKagoDuties(
-      matchDays, confirmedAttendance,
-      kagoCounts, kagoLast,
+    // ② カゴが必要な全セッション（練習・運動会等・試合。合宿/休みは除外）を日付順に
+    const baseResults: AssignmentResult[] = confirmedSchedule
+      .filter(d => d.type === 'practice' || d.type === 'special' || d.type === 'match')
+      .map(d => {
+        if (d.type === 'match') {
+          return {
+            date: d.date, dayOfWeek: d.dayOfWeek,
+            coach: null, videoCoach: null, kagoCoach: null,
+            practiceTime: d.practiceTime,
+            isSaturday: d.dayOfWeek === '土',
+            isMatch: true,
+          } as AssignmentResult;
+        }
+        // 練習・運動会等は駐車場/ビデオ確定済みの結果を使う
+        return pvByDate.get(d.date) ?? ({
+          date: d.date, dayOfWeek: d.dayOfWeek,
+          coach: null, videoCoach: null, kagoCoach: null,
+          practiceTime: d.practiceTime,
+          isSaturday: d.dayOfWeek === '土',
+          isMatch: false,
+        } as AssignmentResult);
+      })
+      .sort(byDate);
+
+    // ③ カゴ連鎖を割り当て（前月からの引き継ぎを seed で渡す）
+    const seed = getPreviousKagoSession(selectedMonth);
+    const { results } = assignKagoChain(
+      baseResults, confirmedAttendance,
+      kagoCounts, seed?.holder ?? null, seed,
       KAGO_COACH_ORDER,
     );
-
-    // 練習日（駐車場・ビデオ）と試合日（カゴ）の結果を結合し、日付（M/D）順に並べ替える
-    const results = [...pvResults, ...kagoResults].sort((a, b) => {
-      const [am, ad] = a.date.split('/').map(Number);
-      const [bm, bd] = b.date.split('/').map(Number);
-      return am !== bm ? am - bm : ad - bd;
-    });
 
     const monthData: MonthlyData = {
       month: selectedMonth,

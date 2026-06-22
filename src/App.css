@@ -489,6 +489,16 @@ body {
 
 .no-coach { color: var(--text-muted); font-size: 0.8rem; }
 
+/* カゴ引き継ぎ要確認（前回来ていた出席者が今日いない＝物理的に持って来られない日） */
+.kago-needs-confirm {
+  color: #C62828;
+  background: #FFEBEE;
+  border-radius: 6px;
+  padding: 1px 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
 .day-type-badge {
   display: inline-flex;
   align-items: center;

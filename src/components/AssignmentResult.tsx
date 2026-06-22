@@ -39,7 +39,13 @@ const AssignmentResultView: React.FC<AssignmentResultProps> = ({ results, month,
       }
     } else {
       const oldCoach = original.kagoCoach;
-      updated[idx] = { ...original, kagoCoach: newCoach || null };
+      // 手動でカゴ係を指定＝明示的な指名。兼任扱い・要確認は解除し、累計に数える対象にする
+      updated[idx] = {
+        ...original,
+        kagoCoach: newCoach || null,
+        kagoCarriedByParking: false,
+        kagoNeedsConfirm: false,
+      };
       if (oldCoach) {
         addChangeHistory({
           date: original.date, month,
@@ -59,6 +65,40 @@ const AssignmentResultView: React.FC<AssignmentResultProps> = ({ results, month,
     setEditingField(field);
   };
 
+  // カゴ欄（試合日・練習日の両方で使う）
+  const kagoCell = (idx: number, r: AssignmentResult, label: string) => (
+    <div className="result-duty">
+      <span className="duty-label">{label}</span>
+      {editingIdx === idx && editingField === 'kago' ? (
+        <select
+          className="coach-select"
+          value={r.kagoCoach || ''}
+          onChange={(e) => handleChange(idx, 'kago', e.target.value)}
+          onBlur={() => { setEditingIdx(null); setEditingField(null); }}
+          autoFocus
+        >
+          <option value="">（未定）</option>
+          {KAGO_COACH_ORDER.map(coach => (
+            <option key={coach} value={coach}>
+              {COACH_LAST_NAMES[coach]}さん
+            </option>
+          ))}
+        </select>
+      ) : (
+        <>
+          <span className={`coach-name-result ${r.kagoNeedsConfirm ? 'kago-needs-confirm' : ''}`}>
+            {r.kagoCoach
+              ? `${COACH_LAST_NAMES[r.kagoCoach]}さん`
+              : r.kagoNeedsConfirm
+                ? `⚠️要確認${r.kagoHolder ? `（今カゴ: ${COACH_LAST_NAMES[r.kagoHolder] || r.kagoHolder}さん）` : ''}`
+                : '該当者なし'}
+          </span>
+          <button className="btn btn-xs btn-ghost" onClick={() => startEdit(idx, 'kago')}>✏️</button>
+        </>
+      )}
+    </div>
+  );
+
   return (
     <div className="assignment-result">
       <h3 className="section-title">④ 割り当て結果</h3>
@@ -72,32 +112,7 @@ const AssignmentResultView: React.FC<AssignmentResultProps> = ({ results, month,
             <div className="result-duties">
               {r.isMatch ? (
                 /* カゴ当番（試合日） */
-                <div className="result-duty">
-                  <span className="duty-label">⚽試合 🧺カゴ▶</span>
-                  {editingIdx === idx && editingField === 'kago' ? (
-                    <select
-                      className="coach-select"
-                      value={r.kagoCoach || ''}
-                      onChange={(e) => handleChange(idx, 'kago', e.target.value)}
-                      onBlur={() => { setEditingIdx(null); setEditingField(null); }}
-                      autoFocus
-                    >
-                      <option value="">（未定）</option>
-                      {KAGO_COACH_ORDER.map(coach => (
-                        <option key={coach} value={coach}>
-                          {COACH_LAST_NAMES[coach]}さん
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <>
-                      <span className="coach-name-result">
-                        {r.kagoCoach ? `${COACH_LAST_NAMES[r.kagoCoach]}さん` : '該当者なし'}
-                      </span>
-                      <button className="btn btn-xs btn-ghost" onClick={() => startEdit(idx, 'kago')}>✏️</button>
-                    </>
-                  )}
-                </div>
+                kagoCell(idx, r, '⚽試合 🧺カゴ▶')
               ) : (
                 <>
                   {/* 駐車場当番 */}
@@ -156,6 +171,8 @@ const AssignmentResultView: React.FC<AssignmentResultProps> = ({ results, month,
                       </>
                     )}
                   </div>
+                  {/* カゴ：土曜＝必ず／日曜＝駐車場当番が持てない日のみ／要確認の日 */}
+                  {(r.kagoNeedsConfirm || (r.kagoCoach && !r.kagoCarriedByParking)) && kagoCell(idx, r, '🧺カゴ▶')}
                 </>
               )}
             </div>

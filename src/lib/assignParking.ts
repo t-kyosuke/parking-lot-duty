@@ -6,10 +6,23 @@ export interface AssignmentResult {
   dayOfWeek: string;
   coach: string | null;       // 駐車場当番（土曜・試合日は null）
   videoCoach: string | null;  // ビデオ当番（試合日は null）
-  kagoCoach: string | null;   // カゴ当番（試合日のみ。練習日は null）
+  kagoCoach: string | null;   // カゴを持ってくる人（全カゴ必要日。要確認の日は null）
   practiceTime: string;
   isSaturday: boolean;
   isMatch: boolean;           // 試合日かどうか（表示の出し分け用）
+  // ── カゴ連鎖用（2026-06-22 追加。旧データには無いので optional）──
+  kagoCarriedByParking?: boolean; // true=その日の駐車場当番がそのまま運ぶ（カゴ累計に数えない）
+  kagoNeedsConfirm?: boolean;     // true=前回来ていた出席者が今日いない＝引き継ぎ要確認
+  kagoHolder?: string | null;     // この日時点でカゴを持っている人（要確認時の連絡先）
+}
+
+/**
+ * カゴ累計に「数える」割り当てかどうか。
+ * = カゴ係として指名された日だけ数える（日曜の駐車場当番がそのまま運ぶ分・要確認は数えない）。
+ * 旧データ（試合日のみ kagoCoach あり・新フラグ無し）は true 扱い＝従来どおり数える（後方互換）。
+ */
+export function isKagoCounted(a: AssignmentResult): boolean {
+  return !!a.kagoCoach && !a.kagoCarriedByParking && !a.kagoNeedsConfirm;
 }
 
 export interface DutyAssignmentOutput {
@@ -159,73 +172,131 @@ export function assignDuties(
   };
 }
 
-export interface KagoAssignmentOutput {
+/** 月またぎの引き継ぎ：月初セッションが参照する「前回のカゴ・セッション」の情報 */
+export interface KagoSeed {
+  holder: string | null;                                   // 現在カゴを持っている人（前月最後の運び役）
+  lastPresent: Record<string, AttendanceStatus> | null;    // 前回セッションの出欠（null=引き継ぎ不明＝初回扱いで緩める）
+}
+
+export interface KagoChainOutput {
   results: AssignmentResult[];
-  kagoCounts: Record<string, number>; // 割り当て後の累計（カゴ）
-  kagoLastCoach: string | null;        // 最後のカゴ当番者（次の連続防止の起点）
+  kagoCounts: Record<string, number>; // 割り当て後の累計（カゴ係指名分のみ）
+  kagoLastCoach: string | null;        // 最後にカゴを運んだ人（次の連続防止の起点）
+  kagoHolder: string | null;           // 月末時点でカゴを持っている人（次月へ引き継ぐ）
 }
 
 /**
- * 試合日の「カゴ当番」を「累計回数が少ない人を優先」で割り当てる。
- *
- * カゴ当番 ＝ 試合前の最後の練習でカゴを預かり、試合当日に試合会場へ持っていく役割。
- * - 対象は試合日（type === 'match'）のみ。曜日は問わない（土曜の試合でも割り当てる）。
- * - 駐車場・ビデオとは独立した累計でカウントする。
- * - 出席（◯）している人の中から累計最少を選び、直前のカゴ当番者は連続を避ける。
- * - 累計は引数で引き継ぎ、1人割り当てるたびに加算していく。
- *
- * @param matchDays    試合日（date / dayOfWeek / practiceTime）
- * @param attendance   出欠（日付→コーチ→記号）。試合日の出欠を使う。
- * @param kagoCounts   カゴのこれまでの累計（この呼び出しで加算される）
- * @param kagoLastCoach 直前のカゴ当番者（前の試合の人など。連続防止の起点）
- * @param kagoOrder    カゴ当番候補（既定 KAGO_COACH_ORDER）
- * @param kagoMonthlyLimit 1か月あたり上限（既定 DEFAULT_MONTHLY_LIMIT。試合は月数回なので実質的にはほぼ効かない）
+ * カゴ係を1人選ぶ（候補は「前回も来ていて今日も来ている人」に絞り込み済み）。
+ * - 同日の駐車場・ビデオ当番はなるべく避ける（負荷分散。候補が尽きるなら緩める）
+ * - 直前に運んだ人は連続を避ける（尽きるなら緩める）
+ * - 残った中で累計最少。同数は order（固定順）で先の人
  */
-export function assignKagoDuties(
-  matchDays: Array<{ date: string; dayOfWeek: string; practiceTime: string }>,
+function pickKagoCarrier(
+  counts: Record<string, number>,
+  pool: string[],
+  lastCoach: string | null,
+  conflicts: Array<string | null>,
+): string | null {
+  if (pool.length === 0) return null;
+  const conflictSet = new Set(conflicts.filter((c): c is string => !!c));
+  let cand = pool.filter((c) => !conflictSet.has(c));
+  if (cand.length === 0) cand = pool;
+  let noRepeat = cand.filter((c) => c !== lastCoach);
+  if (noRepeat.length === 0) noRepeat = cand;
+  let best = noRepeat[0];
+  for (const c of noRepeat) if ((counts[c] ?? 0) < (counts[best] ?? 0)) best = c;
+  return best;
+}
+
+/**
+ * 「カゴを持ってくる人」を全カゴ必要セッション（練習・運動会等・試合）について日付順に決める。
+ *
+ * カゴは物理的に1個しかない物（黄色うちわ＋道具）なので、「前回のセッションに来ていた人」しか
+ * 次に持って来られない。これを連鎖（バトンリレー）として最後まで筋を通して割り当てる。
+ *
+ * ルール（各セッション）：
+ *  - 候補 ＝ 今日出席◯ かつ「前回セッションにも出席◯」の人（＝前回カゴを受け取れた人）
+ *  - 日曜・祝日の練習（駐車場あり）で、駐車場当番が前回も来ていれば → 駐車場当番がそのまま運ぶ
+ *    （＝うちわ入りのカゴが必要なので。これは「カゴ係」とは数えない）
+ *  - それ以外（土曜・試合・上記で駐車場当番が前回いなかった日）→ カゴ係を1人指名（累計に数える）
+ *  - 候補が0人（前回来ていた出席者が今日いない）→ 「要確認」とし、現在の保持者を表示
+ *
+ * ★駐車場・ビデオの当番者は一切変えない（baseResults を読むだけ・新オブジェクトを返す）。
+ *
+ * @param baseResults 駐車場/ビデオ確定済み・日付順のベース結果（カゴ欄は未設定）。試合日は coach/videoCoach=null・isMatch=true
+ * @param attendance  出欠（日付→コーチ→記号）
+ * @param kagoCounts  カゴのこれまでの累計（この呼び出しで加算される）
+ * @param kagoLastCoach 直前にカゴを運んだ人（連続防止の起点）
+ * @param seed        前月からの引き継ぎ（現在の保持者・前回出欠）。null なら初回扱いで前回条件を緩める
+ * @param kagoOrder   カゴ係候補（既定 KAGO_COACH_ORDER）
+ */
+export function assignKagoChain(
+  baseResults: AssignmentResult[],
   attendance: Record<string, Record<string, AttendanceStatus>>,
   kagoCounts: Record<string, number>,
   kagoLastCoach: string | null = null,
+  seed: KagoSeed | null = null,
   kagoOrder: string[] = KAGO_COACH_ORDER,
-  kagoMonthlyLimit: number = DEFAULT_MONTHLY_LIMIT,
-): KagoAssignmentOutput {
+): KagoChainOutput {
   // 累計を複製（引数を壊さない）し、未登録のコーチは 0 で初期化
   const kCounts: Record<string, number> = {};
   for (const c of kagoOrder) kCounts[c] = kagoCounts[c] ?? 0;
 
-  // 今月のカゴ当番回数（上限判定用・この月だけのカウント）
-  const kMonthly: Record<string, number> = {};
-  for (const c of kagoOrder) kMonthly[c] = 0;
-
-  let kLast = kagoLastCoach;
+  let holder: string | null = seed?.holder ?? null;
+  let lastPresent: Record<string, AttendanceStatus> | null = seed?.lastPresent ?? null;
+  let lastCarrier: string | null = kagoLastCoach;
   const results: AssignmentResult[] = [];
 
-  for (const day of matchDays) {
-    const isSaturday = day.dayOfWeek === '土';
-    const dayAtt = attendance[day.date] ?? {};
+  for (const base of baseResults) {
+    const dayAtt = attendance[base.date] ?? {};
+    const todayPresent = kagoOrder.filter((c) => dayAtt[c] === '◯');
+    // 候補 ＝ 今日◯ ∩ 前回◯（前回が不明＝lastPresent null なら緩める＝今日◯全員）
+    const pool = lastPresent
+      ? todayPresent.filter((c) => lastPresent![c] === '◯')
+      : todayPresent;
 
-    const kagoCoach = pickByCount(kagoOrder, kCounts, dayAtt, kLast, null, kMonthly, kagoMonthlyLimit);
-    if (kagoCoach) {
-      kCounts[kagoCoach]++;
-      kMonthly[kagoCoach]++;
-      kLast = kagoCoach;
+    let kagoCoach: string | null = null;
+    let carriedByParking = false;
+    let needsConfirm = false;
+
+    const hasParkingRole = !base.isMatch && !base.isSaturday; // 日曜・祝日の練習
+    const parkingCoach = base.coach;
+
+    if (
+      hasParkingRole &&
+      parkingCoach &&
+      (lastPresent === null || lastPresent[parkingCoach] === '◯')
+    ) {
+      // 駐車場当番がカゴ（うちわ）を前回受け取れている → そのまま持参（カゴ係には数えない）
+      kagoCoach = parkingCoach;
+      carriedByParking = true;
+    } else {
+      // カゴ係を指名（累計に数える）。同日の駐車場・ビデオはなるべく避ける
+      const picked = pickKagoCarrier(kCounts, pool, lastCarrier, [base.coach, base.videoCoach]);
+      if (picked) {
+        kagoCoach = picked;
+        kCounts[picked] = (kCounts[picked] ?? 0) + 1;
+      } else {
+        needsConfirm = true; // 今日来てる誰も前回カゴを受け取れていない＝物理的に持って来られない
+      }
     }
 
+    if (kagoCoach) {
+      // カゴが今日ここに来た → 基準（保持者・前回出欠・直前運び手）を更新
+      holder = kagoCoach;
+      lastPresent = dayAtt;
+      lastCarrier = kagoCoach;
+    }
+    // 要確認の日は holder / lastPresent / lastCarrier を据え置き（カゴは前回成功日の保持者のまま）
+
     results.push({
-      date: day.date,
-      dayOfWeek: day.dayOfWeek,
-      coach: null,       // 試合日は駐車場・ビデオなし
-      videoCoach: null,
+      ...base,
       kagoCoach,
-      practiceTime: day.practiceTime,
-      isSaturday,
-      isMatch: true,
+      kagoCarriedByParking: carriedByParking,
+      kagoNeedsConfirm: needsConfirm,
+      kagoHolder: holder,
     });
   }
 
-  return {
-    results,
-    kagoCounts: kCounts,
-    kagoLastCoach: kLast,
-  };
+  return { results, kagoCounts: kCounts, kagoLastCoach: lastCarrier, kagoHolder: holder };
 }

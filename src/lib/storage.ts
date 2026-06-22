@@ -1,6 +1,7 @@
 import { STORAGE_KEYS, DEFAULT_ADMIN_PASSWORD, COACH_ORDER, VIDEO_COACH_ORDER, KAGO_COACH_ORDER, DEFAULT_SCHEDULE, MONTHS } from './constants';
 import type { ScheduleDay, AttendanceStatus } from './constants';
 import type { AssignmentResult } from './assignParking';
+import { isKagoCounted } from './assignParking';
 
 // ── 型定義 ──
 
@@ -207,8 +208,9 @@ export function recalculateCumulativeCounts(): { parking: Record<string, number>
       if (assignment.videoCoach) {
         video[assignment.videoCoach] = (video[assignment.videoCoach] || 0) + 1;
       }
-      if (assignment.kagoCoach) {
-        kago[assignment.kagoCoach] = (kago[assignment.kagoCoach] || 0) + 1;
+      // カゴは「カゴ係として指名された日」だけ数える（日曜の駐車場当番がそのまま運ぶ分・要確認は数えない）
+      if (isKagoCounted(assignment)) {
+        kago[assignment.kagoCoach!] = (kago[assignment.kagoCoach!] || 0) + 1;
       }
     }
   }
@@ -240,7 +242,10 @@ export function getCountsForAssignment(
   const data = getMonthlyData(selectedMonth);
   if (data?.confirmed) {
     for (const a of data.assignments) {
-      const coach = type === 'parking' ? a.coach : type === 'video' ? a.videoCoach : a.kagoCoach;
+      let coach: string | null = null;
+      if (type === 'parking') coach = a.coach;
+      else if (type === 'video') coach = a.videoCoach;
+      else coach = isKagoCounted(a) ? a.kagoCoach : null; // カゴは指名分だけ控除（兼任・要確認は対象外）
       if (coach && coach in counts) counts[coach] = Math.max(0, counts[coach] - 1);
     }
   }
@@ -268,6 +273,42 @@ export function getPreviousLastCoach(
       const coach = type === 'parking' ? a.coach : type === 'video' ? a.videoCoach : a.kagoCoach;
       if (coach) return coach;
     }
+  }
+  return null;
+}
+
+/**
+ * 月またぎのカゴ引き継ぎ情報を返す。
+ *
+ * 選択月より前の確定済み月を新しい順にたどり、「最後にカゴを運んだ日」を探して
+ *  - holder: その日の運び役（＝現在カゴを持っている人）
+ *  - lastPresent: その日の出欠（＝次の月初セッションの「前回◯」判定に使う）
+ * を返す。見つからなければ null（＝月初は前回条件を緩める＝初回扱い）。
+ *
+ * 旧フォーマット（試合日だけ kagoCoach がある月）は、練習日の保持者が記録されていないため
+ * lastPresent を null にして緩める（holder は連続防止の起点としてだけ使う）。
+ */
+export function getPreviousKagoSession(
+  selectedMonth: string,
+): { holder: string | null; lastPresent: Record<string, AttendanceStatus> | null } | null {
+  const idx = MONTHS.indexOf(selectedMonth);
+  if (idx < 0) return null;
+  const allData = getAllMonthlyData();
+  for (let i = idx - 1; i >= 0; i--) {
+    const data = allData[MONTHS[i]];
+    if (!data?.confirmed || !data.assignments?.length) continue;
+    // 練習日にもカゴが入っている＝新フォーマット（前回出欠が信頼できる）
+    const isNewFormat = data.assignments.some((a) => !a.isMatch && a.kagoCoach);
+    for (let j = data.assignments.length - 1; j >= 0; j--) {
+      const a = data.assignments[j];
+      if (a.kagoCoach) {
+        return {
+          holder: a.kagoCoach,
+          lastPresent: isNewFormat ? (data.attendance[a.date] ?? null) : null,
+        };
+      }
+    }
+    // この月はカゴを運んだ記録なし → さらに前の月へ
   }
   return null;
 }

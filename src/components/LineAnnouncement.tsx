@@ -14,7 +14,14 @@ const LineAnnouncement: React.FC<LineAnnouncementProps> = ({ results, month }) =
 
   // 当番がある日のみ（駐車場・ビデオ・カゴのいずれか）。
   // 試合日(isMatch)はカゴが未定でも「🧺カゴ▶未定」として必ず出す（結果・閲覧画面と揃える）
-  const assignedDays = results.filter(r => r.coach || r.videoCoach || r.kagoCoach || r.isMatch);
+  const assignedDays = results.filter(r => r.coach || r.videoCoach || r.kagoCoach || r.isMatch || r.kagoNeedsConfirm);
+
+  // カゴ行に出す文字（駐車場当番がそのまま運ぶ日は出さない＝null）
+  const kagoText = (r: AssignmentResult): string | null => {
+    if (r.kagoCoach && !r.kagoCarriedByParking) return `${COACH_LAST_NAMES[r.kagoCoach] || r.kagoCoach}さん`;
+    if (r.kagoNeedsConfirm) return `要確認${r.kagoHolder ? `（今カゴ:${COACH_LAST_NAMES[r.kagoHolder] || r.kagoHolder}さん）` : ''}`;
+    return null;
+  };
 
   const DOW_MAP: Record<string, string> = {
     '日': '日曜日', '月': '月曜日', '火': '火曜日', '水': '水曜日',
@@ -31,12 +38,14 @@ ${assignedDays.map(r => {
     const d = parts[1];
     const dow = DOW_MAP[r.dayOfWeek] || r.dayOfWeek;
     if (r.isMatch) {
-      const kagoName = r.kagoCoach ? `${COACH_LAST_NAMES[r.kagoCoach] || r.kagoCoach}さん` : '未定';
-      return `${m}月${d}日（${dow}）⚽試合：🧺カゴ▶${kagoName}`;
+      return `${m}月${d}日（${dow}）⚽試合：🧺カゴ▶${kagoText(r) ?? '未定'}`;
     }
     const parkingName = r.isSaturday ? '-' : (r.coach ? `${COACH_LAST_NAMES[r.coach] || r.coach}さん` : '未定');
     const videoName = r.videoCoach ? `${COACH_LAST_NAMES[r.videoCoach] || r.videoCoach}さん` : '未定';
-    return `${m}月${d}日（${dow}）：駐車場▶${parkingName}　/　ビデオ▶${videoName}`;
+    // カゴ：土曜＝必ず／日曜＝駐車場当番が持てない日のみ／要確認の日（駐車場当番が運ぶ日は出さない）
+    const kago = kagoText(r);
+    const kagoPart = kago ? `　/　🧺カゴ▶${kago}` : '';
+    return `${m}月${d}日（${dow}）：駐車場▶${parkingName}　/　ビデオ▶${videoName}${kagoPart}`;
   }).join('\n')}
 
 よろしくお願いします。`;

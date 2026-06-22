@@ -121,6 +121,13 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
               const kagoName = assignment?.kagoCoach
                 ? COACH_LAST_NAMES[assignment.kagoCoach] || assignment.kagoCoach
                 : null;
+              const kagoNeedsConfirm = assignment?.kagoNeedsConfirm ?? false;
+              const kagoCarriedByParking = assignment?.kagoCarriedByParking ?? false;
+              const kagoHolderName = assignment?.kagoHolder
+                ? COACH_LAST_NAMES[assignment.kagoHolder] || assignment.kagoHolder
+                : null;
+              // 練習日のカゴ表示：土曜＝必ず／日曜＝駐車場当番が持てない日のみ／要確認の日
+              const showKagoOnPractice = kagoNeedsConfirm || (!!kagoName && !kagoCarriedByParking);
 
               return (
                 <div
@@ -151,6 +158,16 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
                             {videoName ? <span className="coach-badge">{videoName}さん</span> : <span className="no-coach">未定</span>}
                           </span>
                         </span>
+                        {showKagoOnPractice && (
+                          <span className="duty-line">
+                            <span className="duty-line-label">🧺カゴ▶</span>
+                            <span className="duty-line-value">
+                              {kagoName
+                                ? <span className="coach-badge">{kagoName}さん</span>
+                                : <span className="no-coach kago-needs-confirm">要確認{kagoHolderName ? `（今カゴ: ${kagoHolderName}さん）` : ''}</span>}
+                            </span>
+                          </span>
+                        )}
                       </div>
                     ) : day.type === 'match' ? (
                       <div className="duty-display">
@@ -158,7 +175,11 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
                         <span className="duty-line">
                           <span className="duty-line-label">🧺カゴ▶</span>
                           <span className="duty-line-value">
-                            {kagoName ? <span className="coach-badge">{kagoName}さん</span> : <span className="no-coach">未定</span>}
+                            {kagoName
+                              ? <span className="coach-badge">{kagoName}さん</span>
+                              : kagoNeedsConfirm
+                                ? <span className="no-coach kago-needs-confirm">要確認{kagoHolderName ? `（今カゴ: ${kagoHolderName}さん）` : ''}</span>
+                                : <span className="no-coach">未定</span>}
                           </span>
                         </span>
                       </div>
