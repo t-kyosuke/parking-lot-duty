@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { COACH_LAST_NAMES } from '../lib/constants';
+import { computeKagoTakeHome } from '../lib/assignParking';
 import type { AssignmentResult } from '../lib/assignParking';
 
 interface LineAnnouncementProps {
@@ -13,14 +14,20 @@ const LineAnnouncement: React.FC<LineAnnouncementProps> = ({ results, month }) =
   const monthNum = month.replace('月', '');
 
   // 当番がある日のみ（駐車場・ビデオ・カゴのいずれか）。
-  // 試合日(isMatch)はカゴが未定でも「🧺カゴ▶未定」として必ず出す（結果・閲覧画面と揃える）
+  // 試合日(isMatch)はカゴが未定でも必ず出す（結果・閲覧画面と揃える）
   const assignedDays = results.filter(r => r.coach || r.videoCoach || r.kagoCoach || r.isMatch || r.kagoNeedsConfirm);
 
-  // カゴ行に出す文字（駐車場当番がそのまま運ぶ日は出さない＝null）
+  // 各カゴ利用日の「その日の練習後にカゴを持ち帰る人」（＝次のカゴ利用日の担当者）
+  const takeHomeMap = computeKagoTakeHome(results);
+
+  // カゴ行に出す文字（＝その日の練習後に持ち帰る人）
   const kagoText = (r: AssignmentResult): string | null => {
-    if (r.kagoCoach && !r.kagoCarriedByParking) return `${COACH_LAST_NAMES[r.kagoCoach] || r.kagoCoach}さん`;
-    if (r.kagoNeedsConfirm) return `要確認${r.kagoHolder ? `（今カゴ:${COACH_LAST_NAMES[r.kagoHolder] || r.kagoHolder}さん）` : ''}`;
-    return null;
+    const th = takeHomeMap[r.date];
+    if (!th) return null;
+    if (th.carryToNextMonth) return '翌月へ引き継ぎ';
+    if (th.needsConfirm) return `要確認${th.holder ? `（今カゴ:${COACH_LAST_NAMES[th.holder] || th.holder}さん）` : ''}`;
+    if (th.coach) return `${COACH_LAST_NAMES[th.coach] || th.coach}さん`;
+    return '未定';
   };
 
   const DOW_MAP: Record<string, string> = {
@@ -30,7 +37,7 @@ const LineAnnouncement: React.FC<LineAnnouncementProps> = ({ results, month }) =
 
   const text = `${monthNum}月の当番は下記でお願いします。
 
-終わられたコーチは黄色うちわ&カゴセットを次の担当に回していってください！
+各日の「🧺当日カゴ持ち帰り」の人が、その練習後に黄色うちわ&カゴセットを持ち帰ります。
 
 ${assignedDays.map(r => {
     const parts = r.date.split('/');
@@ -38,13 +45,13 @@ ${assignedDays.map(r => {
     const d = parts[1];
     const dow = DOW_MAP[r.dayOfWeek] || r.dayOfWeek;
     if (r.isMatch) {
-      return `${m}月${d}日（${dow}）⚽試合：🧺カゴ▶${kagoText(r) ?? '未定'}`;
+      return `${m}月${d}日（${dow}）⚽試合：🧺当日カゴ持ち帰り▶${kagoText(r) ?? '未定'}`;
     }
     const parkingName = r.isSaturday ? '-' : (r.coach ? `${COACH_LAST_NAMES[r.coach] || r.coach}さん` : '未定');
     const videoName = r.videoCoach ? `${COACH_LAST_NAMES[r.videoCoach] || r.videoCoach}さん` : '未定';
-    // カゴ：土曜＝必ず／日曜＝駐車場当番が持てない日のみ／要確認の日（駐車場当番が運ぶ日は出さない）
+    // カゴ：その日の練習後に持ち帰る人（＝次のカゴ利用日の担当者）を毎回出す
     const kago = kagoText(r);
-    const kagoPart = kago ? `　/　🧺カゴ▶${kago}` : '';
+    const kagoPart = kago ? `　/　🧺当日カゴ持ち帰り▶${kago}` : '';
     return `${m}月${d}日（${dow}）：駐車場▶${parkingName}　/　ビデオ▶${videoName}${kagoPart}`;
   }).join('\n')}
 

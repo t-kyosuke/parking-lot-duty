@@ -25,6 +25,61 @@ export function isKagoCounted(a: AssignmentResult): boolean {
   return !!a.kagoCoach && !a.kagoCarriedByParking && !a.kagoNeedsConfirm;
 }
 
+/** 「その日の練習後にカゴを持ち帰る人」の情報（表示用） */
+export interface KagoTakeHome {
+  coach: string | null;       // 持ち帰る人（フルネーム）。null のときは下のフラグを見る
+  needsConfirm: boolean;      // 次のカゴ利用日が「引き継ぎ要確認」＝持ち帰り先が手動確認
+  holder: string | null;      // 要確認時に今カゴを持っている人（表示用の連絡先）
+  carryToNextMonth: boolean;  // 月内にもう次のカゴ利用日が無い＝翌月へ引き継ぎ
+}
+
+/**
+ * 各カゴ利用日について「その日の練習後にカゴを持ち帰る人」を求める（date → 情報 のマップ）。
+ *
+ * カゴは物理的なバトンなので、ある日の練習後にカゴを持ち帰る人＝「次のカゴ利用日にカゴを持ってくる人」。
+ * その人はその日の練習に出席していてカゴを受け取り、持ち帰って次回持参する。
+ * assignments は「カゴが必要な全セッション（練習・運動会等・試合）」の集合なので、
+ * 日付順に並べれば“次の要素”がそのまま「次のカゴ利用日」になる。
+ *
+ * - 次のカゴ利用日に担当者がいる → その人が持ち帰る
+ * - 次のカゴ利用日が「要確認」 → needsConfirm（今カゴを持っている人を holder に）
+ * - 月内にもう次のカゴ利用日が無い（最後の日） → carryToNextMonth（翌月へ引き継ぎ）
+ */
+export function computeKagoTakeHome(
+  assignments: AssignmentResult[],
+): Record<string, KagoTakeHome> {
+  const toNum = (date: string): number => {
+    const [m, d] = date.split('/').map(Number);
+    return m * 100 + d;
+  };
+  const sorted = [...assignments].sort((a, b) => toNum(a.date) - toNum(b.date));
+
+  const map: Record<string, KagoTakeHome> = {};
+  for (let i = 0; i < sorted.length; i++) {
+    const next = sorted[i + 1];
+    if (!next) {
+      map[sorted[i].date] = { coach: null, needsConfirm: false, holder: null, carryToNextMonth: true };
+    } else if (next.kagoNeedsConfirm) {
+      // 次の日は誰も前回カゴを受け取れていない＝引き継ぎ先が決まらない。
+      // カゴはその日の担当者（＝今の持ち主）のまま据え置き。
+      map[sorted[i].date] = {
+        coach: null,
+        needsConfirm: true,
+        holder: sorted[i].kagoCoach ?? next.kagoHolder ?? null,
+        carryToNextMonth: false,
+      };
+    } else {
+      map[sorted[i].date] = {
+        coach: next.kagoCoach ?? null,
+        needsConfirm: false,
+        holder: null,
+        carryToNextMonth: false,
+      };
+    }
+  }
+  return map;
+}
+
 export interface DutyAssignmentOutput {
   results: AssignmentResult[];
   parkingCounts: Record<string, number>; // 割り当て後の累計（駐車場）

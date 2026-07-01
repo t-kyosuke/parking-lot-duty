@@ -394,17 +394,25 @@ body {
   color: var(--text-secondary);
   display: flex;
   align-items: center;
-  gap: 4px;
-  min-width: 200px;
+  gap: 6px;
+  min-width: 218px;
   justify-content: flex-end;
 }
 
+/* ラベルは「🅿️当日の駐車場当番」など全て8文字で統一。1行に収める。
+   矢印は CSS で付ける：PC＝横並びなので「▶」／スマホ＝縦積みなので「▼」 */
 .duty-line-label {
-  width: 58px;
+  width: 132px;
   text-align: right;
   flex-shrink: 0;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.duty-line-label::after {
+  content: '▶';
+  margin-left: 1px;
 }
 
 .duty-line-value {
@@ -496,6 +504,14 @@ body {
   border-radius: 6px;
   padding: 1px 6px;
   font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* 管理画面：カゴ「持ってくる人」の下に出す「→終わりに◯◯さんが持ち帰り」補足 */
+.kago-takehome-hint {
+  font-size: 0.72rem;
+  color: var(--secondary, #4CAF50);
+  margin: 1px 0 2px 4px;
   font-weight: 600;
 }
 
@@ -1501,6 +1517,18 @@ body {
     padding: 4px 11px;
     font-size: 0.8rem;
   }
+
+  /* スマホ：ラベルが長いので「ラベル→値」を縦積みにして横あふれを防ぐ */
+  .duty-display { gap: 8px; }
+  .duty-line {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+    min-width: 0;
+  }
+  .duty-line-label { width: auto; font-size: 0.7rem; }
+  .duty-line-label::after { content: '▼'; margin-left: 0; }
+  .duty-line-value { min-width: 0; }
 
   .today-marker { right: 170px; font-size: 0.56rem; }
 

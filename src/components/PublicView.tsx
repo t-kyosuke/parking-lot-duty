@@ -3,6 +3,8 @@ import { MONTHS, COACH_LAST_NAMES, DAY_TYPE_LABELS, DEFAULT_SCHEDULE } from '../
 import type { DayType } from '../lib/constants';
 import { getAllMonthlyData, getSchedule, fetchPublishedData } from '../lib/storage';
 import type { MonthlyData } from '../lib/storage';
+import { computeKagoTakeHome } from '../lib/assignParking';
+import type { KagoTakeHome } from '../lib/assignParking';
 
 const HERO_IMAGES = Array.from({ length: 21 }, (_, i) => `/parking-lot-duty/hero-${i + 1}.jpg`);
 
@@ -68,6 +70,12 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
   // 割り当てデータがあるか
   const hasAssignments = monthData?.confirmed && monthData.assignments.length > 0;
 
+  // 各カゴ利用日の「その日の練習後に持ち帰る人」（＝次のカゴ利用日の担当者）
+  const kagoTakeHome = useMemo(
+    () => (hasAssignments ? computeKagoTakeHome(monthData!.assignments) : {}),
+    [hasAssignments, monthData],
+  );
+
   return (
     <div className="public-view">
       {/* ヒーローバナー */}
@@ -118,16 +126,8 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
               const videoName = assignment?.videoCoach
                 ? COACH_LAST_NAMES[assignment.videoCoach] || assignment.videoCoach
                 : null;
-              const kagoName = assignment?.kagoCoach
-                ? COACH_LAST_NAMES[assignment.kagoCoach] || assignment.kagoCoach
-                : null;
-              const kagoNeedsConfirm = assignment?.kagoNeedsConfirm ?? false;
-              const kagoCarriedByParking = assignment?.kagoCarriedByParking ?? false;
-              const kagoHolderName = assignment?.kagoHolder
-                ? COACH_LAST_NAMES[assignment.kagoHolder] || assignment.kagoHolder
-                : null;
-              // 練習日のカゴ表示：土曜＝必ず／日曜＝駐車場当番が持てない日のみ／要確認の日
-              const showKagoOnPractice = kagoNeedsConfirm || (!!kagoName && !kagoCarriedByParking);
+              // その日の練習後にカゴを持ち帰る人（＝次のカゴ利用日の担当者）。カゴ利用日のみ値が入る
+              const takeHome = kagoTakeHome[day.date];
 
               return (
                 <div
@@ -147,41 +147,33 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
                     {isPractice ? (
                       <div className="duty-display">
                         <span className="duty-line">
-                          <span className="duty-line-label">駐車場▶</span>
+                          <span className="duty-line-label">🅿️当日の駐車場当番</span>
                           <span className="duty-line-value">
                             {isSaturday ? <span className="duty-none">ー</span> : parkingName ? <span className="coach-badge">{parkingName}さん</span> : <span className="no-coach">未定</span>}
                           </span>
                         </span>
                         <span className="duty-line">
-                          <span className="duty-line-label">ビデオ▶</span>
+                          <span className="duty-line-label">🎥当日のビデオ当番</span>
                           <span className="duty-line-value">
                             {videoName ? <span className="coach-badge">{videoName}さん</span> : <span className="no-coach">未定</span>}
                           </span>
                         </span>
-                        {showKagoOnPractice && (
+                        {takeHome && (
                           <span className="duty-line">
-                            <span className="duty-line-label">🧺カゴ▶</span>
-                            <span className="duty-line-value">
-                              {kagoName
-                                ? <span className="coach-badge">{kagoName}さん</span>
-                                : <span className="no-coach kago-needs-confirm">要確認{kagoHolderName ? `（今カゴ: ${kagoHolderName}さん）` : ''}</span>}
-                            </span>
+                            <span className="duty-line-label">🧺当日カゴ持ち帰り</span>
+                            <span className="duty-line-value">{renderKagoTakeHome(takeHome)}</span>
                           </span>
                         )}
                       </div>
                     ) : day.type === 'match' ? (
                       <div className="duty-display">
                         <span className="day-type-badge">{getTypeIcon('match')} 試合</span>
-                        <span className="duty-line">
-                          <span className="duty-line-label">🧺カゴ▶</span>
-                          <span className="duty-line-value">
-                            {kagoName
-                              ? <span className="coach-badge">{kagoName}さん</span>
-                              : kagoNeedsConfirm
-                                ? <span className="no-coach kago-needs-confirm">要確認{kagoHolderName ? `（今カゴ: ${kagoHolderName}さん）` : ''}</span>
-                                : <span className="no-coach">未定</span>}
+                        {takeHome && (
+                          <span className="duty-line">
+                            <span className="duty-line-label">🧺当日カゴ持ち帰り</span>
+                            <span className="duty-line-value">{renderKagoTakeHome(takeHome)}</span>
                           </span>
-                        </span>
+                        )}
                       </div>
                     ) : (
                       <span className="day-type-badge">
@@ -205,11 +197,12 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
 
       {/* お知らせ */}
       <div className="public-notice">
-        <p className="public-notice-main">🅿️🎥 今月の当番は上記の通りです。</p>
+        <p className="public-notice-main">🅿️🎥🧺 今月の当番は上記の通りです。</p>
         <p className="public-notice-sub">
-          駐車場当番の役割を終えたコーチは<br />
+          各日の<strong>「🧺当日カゴ持ち帰り」</strong>は、<br />
+          その練習が終わったあとに<br />
           <strong>黄色のうちわ＆カゴセット</strong>を<br />
-          次の駐車場当番の方にお渡しください！
+          持って帰る人です。表のとおりにお渡しください！
         </p>
         <p className="public-notice-note">※ 空気入れの充電もお願いいたします。</p>
       </div>
@@ -223,6 +216,26 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
     </div>
   );
 };
+
+/** 「その日の練習後にカゴを持ち帰る人」の表示（名前 / 翌月へ引き継ぎ / 要確認） */
+function renderKagoTakeHome(th: KagoTakeHome): React.ReactNode {
+  if (th.carryToNextMonth) {
+    return <span className="no-coach">翌月へ引き継ぎ</span>;
+  }
+  if (th.needsConfirm) {
+    const holder = th.holder ? COACH_LAST_NAMES[th.holder] || th.holder : null;
+    return (
+      <span className="no-coach kago-needs-confirm">
+        要確認{holder ? `（今カゴ: ${holder}さん）` : ''}
+      </span>
+    );
+  }
+  if (th.coach) {
+    const name = COACH_LAST_NAMES[th.coach] || th.coach;
+    return <span className="coach-badge">{name}さん</span>;
+  }
+  return <span className="no-coach">未定</span>;
+}
 
 function getTypeIcon(type: DayType): string {
   switch (type) {

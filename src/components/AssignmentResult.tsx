@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { COACH_ORDER, VIDEO_COACH_ORDER, KAGO_COACH_ORDER, COACH_LAST_NAMES } from '../lib/constants';
+import { computeKagoTakeHome } from '../lib/assignParking';
 import type { AssignmentResult } from '../lib/assignParking';
 import { addChangeHistory } from '../lib/storage';
 
@@ -12,6 +13,19 @@ interface AssignmentResultProps {
 const AssignmentResultView: React.FC<AssignmentResultProps> = ({ results, month, onUpdate }) => {
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editingField, setEditingField] = useState<'parking' | 'video' | 'kago' | null>(null);
+
+  // 各カゴ利用日の「その日の練習後に持ち帰る人」（＝次のカゴ利用日の担当者）
+  const takeHomeMap = computeKagoTakeHome(results);
+
+  // 「→終わりに ◯◯さん が持ち帰り」の補足テキスト（無ければ null）
+  const takeHomeHint = (r: AssignmentResult): string | null => {
+    const th = takeHomeMap[r.date];
+    if (!th) return null;
+    if (th.carryToNextMonth) return '→終わりに 翌月へ引き継ぎ';
+    if (th.needsConfirm) return `→終わりに 要確認${th.holder ? `（今カゴ: ${COACH_LAST_NAMES[th.holder] || th.holder}さん）` : ''}`;
+    if (th.coach) return `→終わりに ${COACH_LAST_NAMES[th.coach] || th.coach}さん が持ち帰り`;
+    return '→終わりに 未定';
+  };
 
   const handleChange = (idx: number, field: 'parking' | 'video' | 'kago', newCoach: string) => {
     const original = results[idx];
@@ -65,8 +79,9 @@ const AssignmentResultView: React.FC<AssignmentResultProps> = ({ results, month,
     setEditingField(field);
   };
 
-  // カゴ欄（試合日・練習日の両方で使う）
+  // カゴ欄（試合日・練習日の両方で使う）。「持ってくる人」を編集でき、下に「持ち帰り」を補足表示
   const kagoCell = (idx: number, r: AssignmentResult, label: string) => (
+    <>
     <div className="result-duty">
       <span className="duty-label">{label}</span>
       {editingIdx === idx && editingField === 'kago' ? (
@@ -97,6 +112,8 @@ const AssignmentResultView: React.FC<AssignmentResultProps> = ({ results, month,
         </>
       )}
     </div>
+    {takeHomeHint(r) && <div className="kago-takehome-hint">{takeHomeHint(r)}</div>}
+    </>
   );
 
   return (
@@ -112,7 +129,7 @@ const AssignmentResultView: React.FC<AssignmentResultProps> = ({ results, month,
             <div className="result-duties">
               {r.isMatch ? (
                 /* カゴ当番（試合日） */
-                kagoCell(idx, r, '⚽試合 🧺カゴ▶')
+                kagoCell(idx, r, '⚽試合 🧺カゴを持ってくる人▶')
               ) : (
                 <>
                   {/* 駐車場当番 */}
@@ -171,8 +188,8 @@ const AssignmentResultView: React.FC<AssignmentResultProps> = ({ results, month,
                       </>
                     )}
                   </div>
-                  {/* カゴ：土曜＝必ず／日曜＝駐車場当番が持てない日のみ／要確認の日 */}
-                  {(r.kagoNeedsConfirm || (r.kagoCoach && !r.kagoCarriedByParking)) && kagoCell(idx, r, '🧺カゴ▶')}
+                  {/* カゴ：毎回出す（日曜で駐車場当番が持つ日も、その人の名前を表示） */}
+                  {(r.kagoNeedsConfirm || r.kagoCoach) && kagoCell(idx, r, '🧺カゴを持ってくる人▶')}
                 </>
               )}
             </div>
