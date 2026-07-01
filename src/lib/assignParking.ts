@@ -48,6 +48,23 @@ export interface KagoTakeHome {
 export function computeKagoTakeHome(
   assignments: AssignmentResult[],
 ): Record<string, KagoTakeHome> {
+  // 旧フォーマット（カゴ連鎖導入=2026-06-22 より前に確定した月）は
+  // kagoCarriedByParking / kagoNeedsConfirm フラグを一切持たない（練習日は kagoCoach=null・
+  // 試合日だけ kagoCoach あり）。この形は「次の日の担当を持ち帰り人にする」新方式が成立しないので、
+  // 従来どおり「その日の kagoCoach をその日に表示」へフォールバックする（担当のいない日はエントリを作らない）。
+  const isNewFormat = assignments.some(
+    (a) => a.kagoCarriedByParking !== undefined || a.kagoNeedsConfirm !== undefined,
+  );
+  if (!isNewFormat) {
+    const legacy: Record<string, KagoTakeHome> = {};
+    for (const a of assignments) {
+      if (a.kagoCoach) {
+        legacy[a.date] = { coach: a.kagoCoach, needsConfirm: false, holder: null, carryToNextMonth: false };
+      }
+    }
+    return legacy;
+  }
+
   const toNum = (date: string): number => {
     const [m, d] = date.split('/').map(Number);
     return m * 100 + d;
