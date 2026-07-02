@@ -25,6 +25,45 @@ function normalizeCoachName(name: string): string {
 }
 
 /**
+ * CSVの1行をセルに分割する（クォート付きセル対応）。
+ *
+ * 日程ラベルにカンマが入る場合（例：「"4/26(日) 交流試合,雨天中止"」）、
+ * 単純な split(',') では列がズレて出欠が別のコーチに紐づいてしまう。
+ * "..." で囲まれたセルはカンマを含めて1セルとして扱い、クォート内の "" は
+ * " 1文字とみなす。クォートを含まない行は従来の split(',') と同じ結果になる。
+ */
+function splitCsvLine(line: string): string[] {
+  const cells: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        current += ch;
+      }
+    } else if (ch === '"' && current === '') {
+      // セル先頭の " だけをクォート開始とみなす（途中の " は文字として残す）
+      inQuotes = true;
+    } else if (ch === ',') {
+      cells.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  cells.push(current);
+  return cells;
+}
+
+/**
  * CSVヘッダーのコーチ名と当番候補10名を照合する
  */
 function matchCoachName(csvName: string, coachList: string[]): string | null {
@@ -62,7 +101,8 @@ function parseDateLabel(label: string): { date: string; dayOfWeek: string; pract
  */
 function normalizeAttendance(value: string): AttendanceStatus {
   const v = value.trim();
-  if (v === '◯' || v === '○' || v === 'O' || v === 'o') return '◯';
+  // 〇（U+3007・漢数字のゼロ）は見た目が◯とほぼ同じで手入力時に混入しやすい
+  if (v === '◯' || v === '○' || v === '〇' || v === 'O' || v === 'o') return '◯';
   if (v === '×' || v === '✗' || v === 'x' || v === 'X') return '×';
   // 空欄・△・その他は全て△（未定）扱い
   return '△';
@@ -105,7 +145,7 @@ export function parseCsvText(text: string): ParsedCsvData {
   // 「日程」を含む行を動的に探す（先頭列が「日程」の行）
   let headerLineIndex = -1;
   for (let i = 0; i < lines.length; i++) {
-    const firstCell = lines[i].split(',')[0].trim();
+    const firstCell = splitCsvLine(lines[i])[0].trim();
     if (firstCell === '日程') {
       headerLineIndex = i;
       break;
@@ -117,7 +157,7 @@ export function parseCsvText(text: string): ParsedCsvData {
   }
 
   const headerLine = lines[headerLineIndex];
-  const headers = headerLine.split(',');
+  const headers = splitCsvLine(headerLine);
 
   // コーチ名のインデックスマッピング
   const allCoachNames: string[] = [];
@@ -151,7 +191,7 @@ export function parseCsvText(text: string): ParsedCsvData {
   const duplicateDays: string[] = [];
 
   for (const line of filteredDataLines) {
-    const cells = line.split(',');
+    const cells = splitCsvLine(line);
     const dateLabel = cells[0]?.trim();
     if (!dateLabel) continue;
 
