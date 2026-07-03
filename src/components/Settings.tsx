@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { COACH_ORDER, VIDEO_COACH_ORDER, KAGO_COACH_ORDER, COACH_LAST_NAMES } from '../lib/constants';
 import {
-  getParkingCounts, saveParkingCounts,
-  getVideoCounts, saveVideoCounts,
-  getKagoCounts, saveKagoCounts,
+  getParkingCounts, getVideoCounts, getKagoCounts,
+  setCumulativeCount,
   saveAdminPassword,
   exportAllData, importAllData, resetAllData,
   getGithubToken, saveGithubToken,
@@ -27,24 +26,22 @@ const Settings: React.FC<SettingsProps> = ({ onDataChange }) => {
     setTimeout(() => setToast(null), 2500);
   };
 
+  // 調整は繰越（carryover）として保存されるため、割り当て後の再計算でも消えない（2026-07-03 A-4）
   const handleParkingCountChange = (coach: string, value: number) => {
-    const newCounts = { ...parkingCounts, [coach]: Math.max(0, value) };
-    setParkingCounts(newCounts);
-    saveParkingCounts(newCounts);
+    setCumulativeCount('parking', coach, value);
+    setParkingCounts(getParkingCounts());
     onDataChange();
   };
 
   const handleVideoCountChange = (coach: string, value: number) => {
-    const newCounts = { ...videoCounts, [coach]: Math.max(0, value) };
-    setVideoCounts(newCounts);
-    saveVideoCounts(newCounts);
+    setCumulativeCount('video', coach, value);
+    setVideoCounts(getVideoCounts());
     onDataChange();
   };
 
   const handleKagoCountChange = (coach: string, value: number) => {
-    const newCounts = { ...kagoCounts, [coach]: Math.max(0, value) };
-    setKagoCounts(newCounts);
-    saveKagoCounts(newCounts);
+    setCumulativeCount('kago', coach, value);
+    setKagoCounts(getKagoCounts());
     onDataChange();
   };
 

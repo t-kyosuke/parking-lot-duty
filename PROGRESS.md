@@ -1,5 +1,23 @@
 # PROGRESS.md - 進捗管理
 
+## 2026-07-03 セッション記録・その3（A-4：累計の繰越機能＋手動調整の恒久化を実装）
+### 実施内容
+- 着手前に復元ポイント git tag **`pre-carryover`** を作成（ルール遵守）
+- `constants.ts`：繰越キー3種（`srs_parking_carryover` / `srs_video_carryover` / `srs_kago_carryover`）を追加
+- `storage.ts`：繰越の get/save 6関数を新設。`recalculateCumulativeCounts` を「確定月の合計（`computeMonthlyTotals` に分離）**＋繰越**」に変更（マイナス繰越でも累計は0で下げ止め）。`setCumulativeCount(type, coach, 目標値)` を新設（目標値−月合計を繰越に保存→再計算）。export/import に繰越3種を追加
+- `Settings.tsx`：累計の±調整を `setCumulativeCount` 経由に変更＝**調整が割り当て後の再計算でも消えなくなった**（従来は次の割り当てで消えていた）。UIの見た目は不変
+- **`assignDuties`/`pickByCount`/`assignKagoChain` は無改修**（公平性ロジック不変・入力の累計値が変わるだけ）
+- テスト：`storage.test.ts` を新設（**8件**・localStorage簡易スタブ使用）：従来互換（繰越なし）／繰越加算／調整の恒久化（本命）／マイナス繰越の維持／0下げ止め／`getCountsForAssignment` の繰越込み＋当月控除／カゴの兼任・要確認除外との整合／export→リセット→importの復元
+### 検証
+- `npm run test`：**57件全通過**（assignParking 30＋parseCsv 19＋storage 8）。`npm run build` 型エラー0。lint 既知9件のまま新規0
+- **ブラウザ実証（dev server・preview）**：4月確定データを投入 → 設定画面で河井の駐車場累計を+3 → 割り当て結果の手動変更（塚原→岸下）で再計算が発火 → **河井=3 が維持**（改修前は0に戻る挙動）。月合計の再計算（塚原1→0・岸下0→1）も正常・コンソールエラー0
+- ドキュメント更新：SPEC.md（累計＝月合計＋繰越・キー表追加・CSV「既知の弱点」記述をA-1反映で解消・テスト57件）、CLAUDE.md（57件・繰越の要約）、NEXT_ACTIONS.md（A-4完了）、YEAR_ROLLOVER.md（STEP 1完了）
+### 次回の課題
+- **未デプロイ**（GO待ち）。デプロイしても既存データへの影響なし（繰越キーが増えるだけ・マイグレーション不要）。
+  もし本番で過去に手動調整した値を残したい場合は、デプロイ後に設定画面でもう一度入れ直せば以後は恒久化される
+- A-3（トークン貼り替え）は塚原さんのメール認証コード入力から再開（GitHubの Confirm access 画面で待機中）
+---
+
 ## 2026-07-03 セッション記録・続き（A-2 年度更新手順書／A-3 トークン手順書／A-4 新設。コード変更なし）
 ### 実施内容
 - **A-2**：`docs/ai/YEAR_ROLLOVER.md` を新設（2027年度への切替の全手順：体制確認→繰越実装→前年データ保管→

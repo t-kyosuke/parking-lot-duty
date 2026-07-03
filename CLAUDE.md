@@ -42,7 +42,7 @@
 
 ```bash
 npm run dev      # 開発サーバー → http://localhost:5173/parking-lot-duty/
-npm run test     # ユニットテスト（30件・全通過が正常）
+npm run test     # ユニットテスト（57件・全通過が正常）
 npm run build    # 本番ビルド（型チェック込み）
 npm run lint     # 現状9件の既知指摘あり（下記「lint」参照）
 ```
@@ -56,7 +56,7 @@ npm run lint     # 現状9件の既知指摘あり（下記「lint」参照）
 | `src/lib/storage.ts` | localStorage 永続化＋GitHub公開＋マイグレーション |
 | `src/lib/constants.ts` | **コーチ名簿（直書き）**・年間スケジュール（2026年度固定）・型 |
 | `src/components/` | 画面10個（PublicView=閲覧／AdminView=管理 ほか） |
-| `src/__tests__/assignParking.test.ts` | 性質ベーステスト30件 |
+| `src/__tests__/` | テスト57件（assignParking 30・parseCsv 19・storage 8） |
 | `docs/ai/SPEC.md` | ★詳細仕様書（アルゴリズム・CSV・UI・LINE書式・localStorageキー） |
 | `docs/ai/FABLE_REVIEW.md` / `NEXT_ACTIONS.md` | 全体レビュー結果／改善計画（2026-07-02） |
 | `PROGRESS.md` / `tasks/lessons.md` | セッション記録／学んだことルール |
@@ -69,7 +69,8 @@ npm run lint     # 現状9件の既知指摘あり（下記「lint」参照）
   物理的に1個なので「前回◯∩今日◯」からバトンリレー（`assignKagoChain`）。候補0は「要確認」
 - カゴの**表示だけ**は「その日の練習後に持ち帰る人＝次のカゴ利用日の担当」（`computeKagoTakeHome`）。
   カゴ連鎖導入前の旧データ月は自動フォールバック表示
-- 累計は月またぎで引き継ぐ。再割り当てしても二重カウントしない（`getCountsForAssignment`）
+- 累計は月またぎで引き継ぐ。再割り当てしても二重カウントしない（`getCountsForAssignment`）。
+  累計＝確定月合計＋**繰越**（設定画面の調整・年度引き継ぎは繰越 `srs_*_carryover` に保存され消えない）
 
 ## コーディング規約・変更時の注意
 

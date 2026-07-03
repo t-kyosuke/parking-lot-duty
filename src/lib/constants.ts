@@ -210,6 +210,10 @@ export const STORAGE_KEYS = {
   PARKING_COUNTS: 'srs_parking_counts',
   VIDEO_COUNTS: 'srs_video_counts',
   KAGO_COUNTS: 'srs_kago_counts',
+  // 繰越（前年度からの引き継ぎ分＋手動調整の恒久化。2026-07-03 A-4）
+  PARKING_CARRYOVER: 'srs_parking_carryover',
+  VIDEO_CARRYOVER: 'srs_video_carryover',
+  KAGO_CARRYOVER: 'srs_kago_carryover',
   PARKING_POINTER: 'srs_parking_pointer',
   VIDEO_POINTER: 'srs_video_pointer',
   CHANGE_HISTORY: 'srs_change_history',

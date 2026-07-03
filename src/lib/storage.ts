@@ -183,7 +183,36 @@ export function saveKagoCounts(counts: Record<string, number>): void {
   setItem(STORAGE_KEYS.KAGO_COUNTS, counts);
 }
 
-export function recalculateCumulativeCounts(): { parking: Record<string, number>; video: Record<string, number>; kago: Record<string, number> } {
+// ── 繰越回数（前年度からの引き継ぎ＋手動調整の恒久化。2026-07-03 A-4）──
+// 累計の再計算は「確定月の合計＋この繰越」を保存する。設定画面の±調整は繰越側を
+// 書き換えるため、割り当て後の再計算でも消えない（従来は再計算で消えていた）。
+
+export function getParkingCarryover(): Record<string, number> {
+  return getItem<Record<string, number>>(STORAGE_KEYS.PARKING_CARRYOVER, {});
+}
+
+export function saveParkingCarryover(carryover: Record<string, number>): void {
+  setItem(STORAGE_KEYS.PARKING_CARRYOVER, carryover);
+}
+
+export function getVideoCarryover(): Record<string, number> {
+  return getItem<Record<string, number>>(STORAGE_KEYS.VIDEO_CARRYOVER, {});
+}
+
+export function saveVideoCarryover(carryover: Record<string, number>): void {
+  setItem(STORAGE_KEYS.VIDEO_CARRYOVER, carryover);
+}
+
+export function getKagoCarryover(): Record<string, number> {
+  return getItem<Record<string, number>>(STORAGE_KEYS.KAGO_CARRYOVER, {});
+}
+
+export function saveKagoCarryover(carryover: Record<string, number>): void {
+  setItem(STORAGE_KEYS.KAGO_CARRYOVER, carryover);
+}
+
+/** 確定済みの全月データだけから、繰越を含まない素の累計（月合計）を求める */
+function computeMonthlyTotals(): { parking: Record<string, number>; video: Record<string, number>; kago: Record<string, number> } {
   const allData = getAllMonthlyData();
   const parking: Record<string, number> = {};
   const video: Record<string, number> = {};
@@ -215,10 +244,44 @@ export function recalculateCumulativeCounts(): { parking: Record<string, number>
     }
   }
 
+  return { parking, video, kago };
+}
+
+export function recalculateCumulativeCounts(): { parking: Record<string, number>; video: Record<string, number>; kago: Record<string, number> } {
+  const { parking, video, kago } = computeMonthlyTotals();
+
+  // 繰越（前年度引き継ぎ・手動調整）を加算。マイナス繰越でも累計は0で下げ止め
+  const pCarry = getParkingCarryover();
+  const vCarry = getVideoCarryover();
+  const kCarry = getKagoCarryover();
+  for (const coach of COACH_ORDER) parking[coach] = Math.max(0, parking[coach] + (pCarry[coach] ?? 0));
+  for (const coach of VIDEO_COACH_ORDER) video[coach] = Math.max(0, video[coach] + (vCarry[coach] ?? 0));
+  for (const coach of KAGO_COACH_ORDER) kago[coach] = Math.max(0, kago[coach] + (kCarry[coach] ?? 0));
+
   saveParkingCounts(parking);
   saveVideoCounts(video);
   saveKagoCounts(kago);
   return { parking, video, kago };
+}
+
+/**
+ * 設定画面の累計調整：そのコーチの累計（＝確定月の合計＋繰越）を desiredTotal に合わせる。
+ * 差分を繰越側に保存するため、以後の割り当て・再計算でも調整が消えない。
+ * 月合計より小さくしたい場合は繰越がマイナスになる（累計の表示・割り当て入力は0で下げ止め）。
+ */
+export function setCumulativeCount(
+  type: 'parking' | 'video' | 'kago',
+  coach: string,
+  desiredTotal: number,
+): void {
+  const target = Math.max(0, desiredTotal);
+  const monthly = computeMonthlyTotals()[type][coach] ?? 0;
+  const carryover = type === 'parking' ? getParkingCarryover() : type === 'video' ? getVideoCarryover() : getKagoCarryover();
+  carryover[coach] = target - monthly;
+  if (type === 'parking') saveParkingCarryover(carryover);
+  else if (type === 'video') saveVideoCarryover(carryover);
+  else saveKagoCarryover(carryover);
+  recalculateCumulativeCounts();
 }
 
 /**
@@ -394,6 +457,9 @@ export function exportAllData(): string {
     parkingCounts: getParkingCounts(),
     videoCounts: getVideoCounts(),
     kagoCounts: getKagoCounts(),
+    parkingCarryover: getParkingCarryover(),
+    videoCarryover: getVideoCarryover(),
+    kagoCarryover: getKagoCarryover(),
     parkingPointer: getParkingPointerState(),
     videoPointer: getVideoPointerState(),
     changeHistory: getChangeHistory(),
@@ -412,6 +478,9 @@ export function importAllData(jsonString: string): void {
     if (data.parkingCounts) setItem(STORAGE_KEYS.PARKING_COUNTS, data.parkingCounts);
     if (data.videoCounts) setItem(STORAGE_KEYS.VIDEO_COUNTS, data.videoCounts);
     if (data.kagoCounts) setItem(STORAGE_KEYS.KAGO_COUNTS, data.kagoCounts);
+    if (data.parkingCarryover) setItem(STORAGE_KEYS.PARKING_CARRYOVER, data.parkingCarryover);
+    if (data.videoCarryover) setItem(STORAGE_KEYS.VIDEO_CARRYOVER, data.videoCarryover);
+    if (data.kagoCarryover) setItem(STORAGE_KEYS.KAGO_CARRYOVER, data.kagoCarryover);
     if (data.parkingPointer) setItem(STORAGE_KEYS.PARKING_POINTER, data.parkingPointer);
     if (data.videoPointer) setItem(STORAGE_KEYS.VIDEO_POINTER, data.videoPointer);
     if (data.changeHistory) setItem(STORAGE_KEYS.CHANGE_HISTORY, data.changeHistory);
