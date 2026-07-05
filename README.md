@@ -1,73 +1,35 @@
-# React + TypeScript + Vite
+# SRS 駐車場当番アサイナー
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+吹田ラグビースクール（SRS）中3コーチ陣の「駐車場・ビデオ・カゴ当番」を自動で公平に割り当てるWebアプリ。
 
-Currently, two official plugins are available:
+- **本番**：https://t-kyosuke.github.io/parking-lot-duty/
+- **運用**：管理者1人が月末に調整さんCSVを取り込み → 出欠確認 → 自動割り当て → LINEに文面コピペ →
+  「公開する」でコーチ陣のスマホに反映（閲覧はLINE共有URLから・ログイン不要）
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 技術構成
 
-## React Compiler
+- React 19 + TypeScript + Vite 8／Vanilla CSS／Vitest（テスト57件）
+- バックエンドなし（データは管理PCの localStorage。閲覧用データは gh-pages ブランチの `data.json`）
+- main へ push → GitHub Actions で GitHub Pages へ自動デプロイ
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## コマンド
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev      # 開発サーバー → http://localhost:5173/parking-lot-duty/
+npm run test     # ユニットテスト（57件・全通過が正常）
+npm run build    # 本番ビルド（型チェック込み）
+npm run lint     # 指摘0件が正常
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## ドキュメント
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+| ファイル | 内容 |
+|------|------|
+| `CLAUDE.md` | AI（Claude Code）作業用の運用メモ。**AIはまずこれを読む** |
+| `PROGRESS.md` | セッションごとの作業記録（詳細な経緯はここ） |
+| `docs/ai/HANDOFF.md` | 引き継ぎ総まとめ（全体像・設計判断の理由・注意点） |
+| `docs/ai/SPEC.md` | 詳細仕様書（アルゴリズム・CSV・UI・LINE書式） |
+| `docs/ai/NEXT_ACTIONS.md` | 残タスクと優先順位 |
+| `docs/ai/CHANGELOG_AI.md` | AIによる変更履歴の要約 |
+| `docs/ai/YEAR_ROLLOVER.md` | 年度更新の手順書（2027年2〜3月に実施） |
+| `docs/GITHUB_TOKEN_GUIDE.md` | GitHubトークン再発行の手順書（2027年7月ごろ） |
