@@ -25,3 +25,6 @@ dist-ssr
 
 # Environment variables (secrets)
 .env
+
+# Claude Code セッション用（ローカル設定・worktree置き場）
+.claude/
