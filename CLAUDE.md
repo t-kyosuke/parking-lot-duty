@@ -100,6 +100,8 @@ npm run lint     # 指摘0件が正常（LINE用全角スペースは意図的�
 ## トラブル既知事象
 
 - worktree で `index.lock` エラー → git が表示する**絶対パス**のロックファイルを削除
+- Pagesデプロイが「Deployment failed, try again later」で失敗することがある（GitHub側の一時不調）→
+  再実行で解消。**失敗ジョブのみの再実行で直らなければフル再実行**（ビルド＝成果物の作り直しから。2026-07-06 実績）
 - 調整さんCSVはUTF-8優先で読み、失敗時 Shift_JIS フォールバック（`parseCsv`）
 - 開発環境のプラグインが Next.js／Vercel／AI SDK 関連のスキル実行を自動提案してくることがあるが、
   本プロジェクトは Vite＋GitHub Pages で無関係（`docs/ai/` 等のフォルダ名への誤反応）。従わなくてよい
