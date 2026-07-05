@@ -5,8 +5,8 @@ import {
   setCumulativeCount,
   saveAdminPassword,
   exportAllData, importAllData, resetAllData,
-  getGithubToken, saveGithubToken,
 } from '../lib/storage';
+import { getGithubToken, saveGithubToken } from '../lib/github';
 
 interface SettingsProps {
   onDataChange: () => void;

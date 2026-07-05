@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { MONTHS, COACH_LAST_NAMES, DAY_TYPE_LABELS, DEFAULT_SCHEDULE } from '../lib/constants';
 import type { DayType } from '../lib/constants';
-import { getAllMonthlyData, getSchedule, fetchPublishedData } from '../lib/storage';
+import { getAllMonthlyData, getSchedule } from '../lib/storage';
 import type { MonthlyData } from '../lib/storage';
+import { fetchPublishedData } from '../lib/github';
 import { computeKagoTakeHome } from '../lib/assignParking';
 import type { KagoTakeHome } from '../lib/assignParking';
 
@@ -37,13 +38,17 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
     });
   }, []);
 
-  // ローカルデータ優先（管理者PCでは最新のlocalStorage、スマホではリモート）
-  const localAllData = getAllMonthlyData();
-  const localSchedule = getSchedule();
+  // ローカルデータ優先（管理者PCでは最新のlocalStorage、スマホではリモート）。
+  // localStorage は公開画面の表示中には変わらないため、マウント時に1回だけ読む
+  const localAllData = useMemo(() => getAllMonthlyData(), []);
+  const localSchedule = useMemo(() => getSchedule(), []);
   const hasLocalData = Object.keys(localAllData).length > 0;
   const allData = hasLocalData ? localAllData : (remoteAllData ?? {});
   const monthData = allData[selectedMonth];
-  const savedSchedule = hasLocalData ? localSchedule : (remoteSchedule ?? []);
+  const savedSchedule = useMemo(
+    () => (hasLocalData ? localSchedule : (remoteSchedule ?? [])),
+    [hasLocalData, localSchedule, remoteSchedule],
+  );
 
   // スケジュールデータ：確定済み月データがあればそちらを優先（CSVの土曜等も含む）
   const schedule = useMemo(() => {

@@ -9,9 +9,9 @@ import {
   getCountsForAssignment, getPreviousLastCoach, getPreviousKagoSession,
   getParkingCounts, getVideoCounts, getKagoCounts, recalculateCumulativeCounts,
   getSchedule, saveSchedule,
-  getGithubToken, publishToGithub,
 } from '../lib/storage';
 import type { MonthlyData } from '../lib/storage';
+import { getGithubToken, publishToGithub } from '../lib/github';
 import CsvUploader from './CsvUploader';
 import AttendancePreview from './AttendancePreview';
 import AssignmentResultView from './AssignmentResult';
@@ -21,7 +21,11 @@ import Settings from './Settings';
 
 const AdminView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'assign' | 'settings'>('assign');
-  const [selectedMonthIdx, setSelectedMonthIdx] = useState(0);
+  // 対象月の初期値は今の月（年度並びMONTHSから探す。見つからなければ4月）
+  const [selectedMonthIdx, setSelectedMonthIdx] = useState(() => {
+    const idx = MONTHS.indexOf(`${new Date().getMonth() + 1}月`);
+    return idx >= 0 ? idx : 0;
+  });
   const [csvData, setCsvData] = useState<ParsedCsvData | null>(null);
   const [confirmedAttendance, setConfirmedAttendance] = useState<Record<string, Record<string, AttendanceStatus>> | null>(null);
   const [confirmedSchedule, setConfirmedSchedule] = useState<Array<{ date: string; dayOfWeek: string; type: DayType; practiceTime: string }> | null>(null);
@@ -55,11 +59,15 @@ const AdminView: React.FC = () => {
   const selectedMonth = MONTHS[selectedMonthIdx];
   const monthNum = parseInt(selectedMonth.replace('月', ''), 10);
 
-  // 保存済みデータ
-  const savedData = useMemo(() => getMonthlyData(selectedMonth), [selectedMonth, refreshKey]);
+  // 保存済みデータ（refreshKey は localStorage 更新後に読み直させる再計算トリガー）
+  const savedData = useMemo(() => {
+    void refreshKey;
+    return getMonthlyData(selectedMonth);
+  }, [selectedMonth, refreshKey]);
 
-  // スケジュール（保存済みまたはデフォルト）
+  // スケジュール（保存済みまたはデフォルト。refreshKey は上と同じ再計算トリガー）
   const currentSchedule = useMemo(() => {
+    void refreshKey;
     const saved = getSchedule();
     const source = saved.length > 0 ? saved : DEFAULT_SCHEDULE;
     return source.filter(d => {

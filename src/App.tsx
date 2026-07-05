@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Header from './components/Header';
 import PublicView from './components/PublicView';
 import AdminLogin from './components/AdminLogin';
@@ -14,14 +14,10 @@ migrateRemoveHayashi();
 type AppMode = 'public' | 'login' | 'admin';
 
 const App: React.FC = () => {
-  const [mode, setMode] = useState<AppMode>('public');
-
-  // セッション復帰チェック
-  useEffect(() => {
-    if (sessionStorage.getItem('srs_admin_auth') === 'true') {
-      setMode('admin');
-    }
-  }, []);
+  // セッション復帰（同じタブ内なら管理者ログイン状態を維持）
+  const [mode, setMode] = useState<AppMode>(() =>
+    sessionStorage.getItem('srs_admin_auth') === 'true' ? 'admin' : 'public',
+  );
 
   const handleAdminClick = () => setMode('login');
   const handleLogin = () => setMode('admin');

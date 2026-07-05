@@ -36,7 +36,7 @@
 - React 19 + TypeScript（Vite 8）、Vanilla CSS、Vitest、localStorage（バックエンドなし）
 - デプロイ：main へ push → GitHub Actions で GitHub Pages へ自動デプロイ（`base: '/parking-lot-duty/'`）
 - スマホ閲覧用データ：管理画面の「公開する」→ GitHub API で `data.json` を gh-pages ブランチへコミット
-  → 閲覧側は raw.githubusercontent.com から取得（※`public/data.json` は本番では読まれない）
+  → 閲覧側は raw.githubusercontent.com から取得
 
 ## コマンド
 
@@ -44,7 +44,7 @@
 npm run dev      # 開発サーバー → http://localhost:5173/parking-lot-duty/
 npm run test     # ユニットテスト（57件・全通過が正常）
 npm run build    # 本番ビルド（型チェック込み）
-npm run lint     # 現状9件の既知指摘あり（下記「lint」参照）
+npm run lint     # 指摘0件が正常（LINE用全角スペースは意図的として抑制済み）
 ```
 
 ## 重要ディレクトリ・ファイル
@@ -53,7 +53,8 @@ npm run lint     # 現状9件の既知指摘あり（下記「lint」参照）
 |------|------|
 | `src/lib/assignParking.ts` | ★割り当てアルゴリズム（純粋関数・テスト対象・**聖域**） |
 | `src/lib/parseCsv.ts` | 調整さんCSVパーサー |
-| `src/lib/storage.ts` | localStorage 永続化＋GitHub公開＋マイグレーション |
+| `src/lib/storage.ts` | localStorage 永続化＋マイグレーション |
+| `src/lib/github.ts` | GitHub公開（「公開する」＝data.json を gh-pages へ）・トークン保持 |
 | `src/lib/constants.ts` | **コーチ名簿（直書き）**・年間スケジュール（2026年度固定）・型 |
 | `src/components/` | 画面10個（PublicView=閲覧／AdminView=管理 ほか） |
 | `src/__tests__/` | テスト57件（assignParking 30・parseCsv 19・storage 8） |
@@ -88,7 +89,7 @@ npm run lint     # 現状9件の既知指摘あり（下記「lint」参照）
 - 変更後は必ず：`npm run test`（30件）→ `npm run build` → 必要ならブラウザ実機確認
 - ブラウザ検証で localStorage にテストデータを入れるときは、先にアプリURLへ移動してから。
   かつ `srs_migration_remove_hayashi_v1='done'` を先にセット（しないと5月以降のデータが消える）
-- lint：既知9件（全角スペース4=意図的、App.tsx setState 1、useMemo警告3、他1）。新規エラーを増やさない
+- lint：**0件が正常**（2026-07-05 に整理済み。LINE用全角スペースは意図的として disable コメントで抑制）。新規指摘を増やさない
 - **本番デプロイ（main へ push）は塚原さんのGOを得てから**。デプロイ後は本番JSの反映を確認
 
 ## トラブル既知事象

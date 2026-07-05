@@ -67,6 +67,9 @@ CLAUDE.md / docs/ai/SPEC.md を実態に合わせて修正済み）
 
 ## B：余裕があれば対応する項目
 
+> ✅ **B-1〜B-5 すべて 2026-07-05 実装済み**（lint 9件→0件・public/data.json 削除・当月初期選択・
+> CI Node 24・github.ts 分離。テスト57件/build/lint 0件/ブラウザ実機で確認。詳細は PROGRESS.md）
+
 ### B-1. lint 整理（意図的な全角スペースを除く）
 - `App.tsx:22` の setState-in-effect（初期モードを `useState(() => ...)` の初期化関数に変更）、
   useMemo 依存警告3件、未使用 eslint-disable 1件。

@@ -209,7 +209,8 @@ DEFAULT_SCHEDULE で1年（駐車場61日／ビデオ122日）回したときの
 - **スマホ・他端末**：管理画面の「🌐 公開する」で `data.json` を GitHub API 経由で
   `gh-pages` ブランチにコミット → 閲覧側は `raw.githubusercontent.com/.../gh-pages/data.json` を取得
 - アプリ本体は main への push で GitHub Actions がビルド・デプロイ（Pages のソースは Actions）
-- リポジトリ内の `public/data.json` は初期のサンプルで、**本番の閲覧では読まれていない**
+- GitHub連携（公開・トークン保持）は `src/lib/github.ts`（2026-07-05 に storage.ts から分離）。
+  紛らわしかった未使用の `public/data.json` は削除済み（同日 B-2）
 
 | キー | 内容 |
 |------|------|

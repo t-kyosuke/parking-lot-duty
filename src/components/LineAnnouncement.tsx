@@ -51,7 +51,10 @@ ${assignedDays.map(r => {
     const videoName = r.videoCoach ? `${COACH_LAST_NAMES[r.videoCoach] || r.videoCoach}さん` : '未定';
     // カゴ：その日の練習後に持ち帰る人（＝次のカゴ利用日の担当者）を毎回出す
     const kago = kagoText(r);
+    // 区切りの全角スペースはLINEでの見栄えに必須（意図的。半角に「修正」しないこと）
+    // eslint-disable-next-line no-irregular-whitespace
     const kagoPart = kago ? `　/　🧺当日カゴ持ち帰り▶${kago}` : '';
+    // eslint-disable-next-line no-irregular-whitespace
     return `${m}月${d}日（${dow}）：駐車場▶${parkingName}　/　ビデオ▶${videoName}${kagoPart}`;
   }).join('\n')}
 

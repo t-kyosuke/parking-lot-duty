@@ -474,7 +474,6 @@ describe('カゴ公平性シミュレーション（1年・出席80%・構造的
     const gap = Math.max(...vals) - Math.min(...vals);
 
     // 結果を表示（ユーザー向けの「公平性の数字」）
-    // eslint-disable-next-line no-console
     console.log('【カゴ公平性シミュレーション】全セッション数:', results.length,
       '/ カゴ係指名:', vals.reduce((a, b) => a + b, 0),
       '/ 駐車場当番が運んだ日:', carriedByParking,

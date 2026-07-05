@@ -1,5 +1,27 @@
 # PROGRESS.md - 進捗管理
 
+## 2026-07-05 セッション記録・その2（B-1〜B-5：残りの改善項目を一括実施）
+### 実施内容
+- **B-1 lint整理**：指摘9件→**0件**。App.tsx のセッション復帰を useState 初期化関数に（挙動同じ・警告解消）、
+  AdminView の useMemo に `void refreshKey;` を追加（localStorage更新後の意図的な再計算トリガーであることを明示）、
+  PublicView のローカルデータ読み込みを useMemo 化（マウント時1回読み・公開画面表示中は変わらないため安全）、
+  テストの不要な eslint-disable 1行を削除。**LINE用の全角スペース4件は「意図的・修正禁止」コメント＋disable で抑制
+  （文面の文字列は一切変更なし）**
+- **B-2**：本番で読まれていない `public/data.json` を削除（参照ゼロを grep で確認。閲覧の読み元は gh-pages の raw URL）
+- **B-3**：管理画面の対象月の初期値を「今の月」に変更（従来は常に4月始まり）
+- **B-4**：CI（deploy.yml）の Node を 20→24 に更新（Actions の非推奨警告を解消）
+- **B-5**：GitHub連携（トークン保持・publishToGithub・fetchPublishedData）を `src/lib/github.ts` へ分離
+  （コードは無改変の移動＋import先の更新のみ。storage.ts は localStorage永続化＋マイグレーション専任に）
+### 検証
+- `npm run test` 57件全通過／`npm run build` 成功／**`npm run lint` 指摘0件**
+- ブラウザ実機（dev server）：公開画面の表示OK・管理画面の初期選択月が**7月**（当月）・
+  LINE文面が1文字も不変（「4月5日（日曜日）：駐車場▶…　/　ビデオ▶…」の全角スペース区切り健在）・コンソールエラー0
+### 次回の課題
+- **未デプロイ**（GO待ち）。デプロイ後は本番のスマホ閲覧と管理画面の初期月を一度確認
+- これで初回レビュー（FABLE_REVIEW.md）由来の改善項目は**S/A/B すべて完了**。
+  残るは2027年2〜3月の年度更新作業（YEAR_ROLLOVER.md STEP 0〜）のみ
+---
+
 ## 2026-07-05 セッション記録（A-4本番デプロイ完了＋A-3トークン安全化を実施完了）
 ### 実施内容
 - **A-4（繰越機能）本番デプロイ完了**（塚原さんのGO後）：`2affca8` を main へプッシュ → Actions成功 →
