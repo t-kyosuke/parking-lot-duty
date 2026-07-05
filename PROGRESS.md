@@ -9,17 +9,26 @@
   （文面の文字列は一切変更なし）**
 - **B-2**：本番で読まれていない `public/data.json` を削除（参照ゼロを grep で確認。閲覧の読み元は gh-pages の raw URL）
 - **B-3**：管理画面の対象月の初期値を「今の月」に変更（従来は常に4月始まり）
-- **B-4**：CI（deploy.yml）の Node を 20→24 に更新（Actions の非推奨警告を解消）
+- **B-4**：CI（deploy.yml）の Node を 20→24 に更新。※これだけでは警告が消えないと判明（警告の正体は
+  Actions部品自体が古いこと）→ **部品を最新版へ更新**（checkout v7・setup-node v6・upload-pages-artifact v5・
+  deploy-pages v5）で根本解消（警告0件を確認）
 - **B-5**：GitHub連携（トークン保持・publishToGithub・fetchPublishedData）を `src/lib/github.ts` へ分離
   （コードは無改変の移動＋import先の更新のみ。storage.ts は localStorage永続化＋マイグレーション専任に）
 ### 検証
 - `npm run test` 57件全通過／`npm run build` 成功／**`npm run lint` 指摘0件**
 - ブラウザ実機（dev server）：公開画面の表示OK・管理画面の初期選択月が**7月**（当月）・
   LINE文面が1文字も不変（「4月5日（日曜日）：駐車場▶…　/　ビデオ▶…」の全角スペース区切り健在）・コンソールエラー0
+### デプロイ
+- **本番デプロイ完了**（塚原さんのGO後）：`eaed5aa`（B本体）＋`1f829fe`（B-4仕上げ＝Actions部品更新）を main へ。
+  部品更新後の初回デプロイは Pages サービス側の一時エラー「Deployment failed, try again later」で1回失敗 →
+  **再実行（rerun）で成功**。本番JSが手元ビルドとハッシュ一致（`index-Djs1fAEG.js`）・非推奨警告0件を確認
+### 発生・解決したエラー
+- Actions部品を最新版へ上げた直後のデプロイが「Deployment failed, try again later」で失敗。ログ確認の結果、
+  ビルドは成功しておりPagesサービス側の一時的な不調と判断 → `gh run rerun --failed` で再実行して成功（部品更新とは無関係）
 ### 次回の課題
-- **未デプロイ**（GO待ち）。デプロイ後は本番のスマホ閲覧と管理画面の初期月を一度確認
 - これで初回レビュー（FABLE_REVIEW.md）由来の改善項目は**S/A/B すべて完了**。
   残るは2027年2〜3月の年度更新作業（YEAR_ROLLOVER.md STEP 0〜）のみ
+- 塚原さんの管理PCで次回開いたとき、管理画面が「今の月」で開くことを一度確認
 ---
 
 ## 2026-07-05 セッション記録（A-4本番デプロイ完了＋A-3トークン安全化を実施完了）
