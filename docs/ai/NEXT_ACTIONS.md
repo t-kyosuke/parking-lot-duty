@@ -39,9 +39,10 @@ CLAUDE.md / docs/ai/SPEC.md を実態に合わせて修正済み）
 - **難易度**：手順書は低、実装は中／**リスク**：中（データ移行を伴うため復元ポイント必須）
 - **人間確認**：累計を引き継ぐかリセットするかは塚原さんの判断
 
-### A-3. GitHubトークンの権限最小化（人間作業・手順案内のみ）→ ✅ 2026-07-03 手順書作成済み・実施は塚原さん待ち
-- **対応内容**：塚原さん向けの手順書 `docs/GITHUB_TOKEN_GUIDE.md` を新設（作業約10分・全手順を平易に記載）。
-  残タスクは塚原さんの実施のみ（Fine-grainedトークン発行→アプリに貼り替え→「公開する」で確認→旧トークン削除）
+### A-3. GitHubトークンの権限最小化 → ✅ 2026-07-05 実施完了
+- **対応内容**：Fine-grainedトークン `srs-duty-publish`（parking-lot-duty のみ・Contents R/W のみ・期限2027-07-03）を
+  作成しアプリに設定、「公開する」成功を確認。旧classicトークン2件は削除済み（classic 0件）。
+  手順書 `docs/GITHUB_TOKEN_GUIDE.md` は**期限切れ時（2027年7月）の再発行手順**として引き続き有効
 - **内容**：塚原さんが GitHub で Fine-grained personal access token
   （対象：`parking-lot-duty` リポジトリのみ・権限：Contents = Read and write）を発行し、
   設定画面で貼り替える。旧トークンは失効させる
