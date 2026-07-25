@@ -1249,6 +1249,379 @@
         }
       ],
       "confirmed": true
+    },
+    "8月": {
+      "month": "8月",
+      "schedule": [
+        {
+          "date": "8/1",
+          "dayOfWeek": "土",
+          "type": "practice",
+          "practiceTime": "13:40-16:40"
+        },
+        {
+          "date": "8/2",
+          "dayOfWeek": "日",
+          "type": "practice",
+          "practiceTime": "13:00-14:20"
+        },
+        {
+          "date": "8/8",
+          "dayOfWeek": "土",
+          "type": "practice",
+          "practiceTime": "13:40-16:40"
+        },
+        {
+          "date": "8/9",
+          "dayOfWeek": "日",
+          "type": "practice",
+          "practiceTime": "10:45-12:00"
+        },
+        {
+          "date": "8/11",
+          "dayOfWeek": "火",
+          "type": "practice",
+          "practiceTime": "10:45-12:00"
+        },
+        {
+          "date": "8/22",
+          "dayOfWeek": "土",
+          "type": "practice",
+          "practiceTime": "13:40-16:40"
+        },
+        {
+          "date": "8/23",
+          "dayOfWeek": "日",
+          "type": "practice",
+          "practiceTime": "9:00-10:35"
+        },
+        {
+          "date": "8/29",
+          "dayOfWeek": "土",
+          "type": "practice",
+          "practiceTime": "13:40-16:40"
+        },
+        {
+          "date": "8/30",
+          "dayOfWeek": "日",
+          "type": "practice",
+          "practiceTime": "10:45-12:00"
+        }
+      ],
+      "attendance": {
+        "7/11": {
+          "橋戸佑介": "◯",
+          "河井彩登": "×",
+          "大串洋尚": "◯",
+          "塚原匡祐": "◯",
+          "国沢剛": "◯",
+          "岸下和樹": "◯",
+          "堀本和幸": "×",
+          "濱田広宣": "◯",
+          "前里元樹": "◯",
+          "松木正和": "◯"
+        },
+        "7/12": {
+          "橋戸佑介": "×",
+          "河井彩登": "×",
+          "大串洋尚": "×",
+          "塚原匡祐": "◯",
+          "国沢剛": "◯",
+          "岸下和樹": "◯",
+          "堀本和幸": "◯",
+          "濱田広宣": "◯",
+          "前里元樹": "△",
+          "松木正和": "◯"
+        },
+        "7/18": {
+          "橋戸佑介": "×",
+          "河井彩登": "×",
+          "大串洋尚": "△",
+          "塚原匡祐": "◯",
+          "国沢剛": "◯",
+          "岸下和樹": "◯",
+          "堀本和幸": "×",
+          "濱田広宣": "×",
+          "前里元樹": "◯",
+          "松木正和": "◯"
+        },
+        "7/19": {
+          "橋戸佑介": "×",
+          "河井彩登": "×",
+          "大串洋尚": "◯",
+          "塚原匡祐": "◯",
+          "国沢剛": "◯",
+          "岸下和樹": "◯",
+          "堀本和幸": "◯",
+          "濱田広宣": "◯",
+          "前里元樹": "△",
+          "松木正和": "◯"
+        },
+        "7/20": {
+          "橋戸佑介": "◯",
+          "河井彩登": "×",
+          "大串洋尚": "×",
+          "塚原匡祐": "◯",
+          "国沢剛": "◯",
+          "岸下和樹": "◯",
+          "堀本和幸": "◯",
+          "濱田広宣": "◯",
+          "前里元樹": "×",
+          "松木正和": "◯"
+        },
+        "7/25": {
+          "橋戸佑介": "×",
+          "河井彩登": "×",
+          "大串洋尚": "×",
+          "塚原匡祐": "◯",
+          "国沢剛": "◯",
+          "岸下和樹": "◯",
+          "堀本和幸": "◯",
+          "濱田広宣": "×",
+          "前里元樹": "◯",
+          "松木正和": "◯"
+        },
+        "7/26": {
+          "橋戸佑介": "◯",
+          "河井彩登": "◯",
+          "大串洋尚": "×",
+          "塚原匡祐": "◯",
+          "国沢剛": "×",
+          "岸下和樹": "◯",
+          "堀本和幸": "×",
+          "濱田広宣": "×",
+          "前里元樹": "△",
+          "松木正和": "◯"
+        },
+        "8/1": {
+          "橋戸佑介": "◯",
+          "河井彩登": "×",
+          "大串洋尚": "△",
+          "塚原匡祐": "◯",
+          "国沢剛": "◯",
+          "岸下和樹": "△",
+          "堀本和幸": "×",
+          "濱田広宣": "◯",
+          "前里元樹": "◯",
+          "松木正和": "◯"
+        },
+        "8/2": {
+          "橋戸佑介": "◯",
+          "河井彩登": "◯",
+          "大串洋尚": "×",
+          "塚原匡祐": "◯",
+          "国沢剛": "◯",
+          "岸下和樹": "×",
+          "堀本和幸": "◯",
+          "濱田広宣": "◯",
+          "前里元樹": "△",
+          "松木正和": "◯"
+        },
+        "8/8": {
+          "橋戸佑介": "×",
+          "河井彩登": "×",
+          "大串洋尚": "△",
+          "塚原匡祐": "◯",
+          "国沢剛": "◯",
+          "岸下和樹": "△",
+          "堀本和幸": "◯",
+          "濱田広宣": "◯",
+          "前里元樹": "◯",
+          "松木正和": "△"
+        },
+        "8/9": {
+          "橋戸佑介": "◯",
+          "河井彩登": "×",
+          "大串洋尚": "◯",
+          "塚原匡祐": "◯",
+          "国沢剛": "◯",
+          "岸下和樹": "◯",
+          "堀本和幸": "◯",
+          "濱田広宣": "△",
+          "前里元樹": "△",
+          "松木正和": "◯"
+        },
+        "8/11": {
+          "橋戸佑介": "×",
+          "河井彩登": "×",
+          "大串洋尚": "◯",
+          "塚原匡祐": "◯",
+          "国沢剛": "◯",
+          "岸下和樹": "◯",
+          "堀本和幸": "×",
+          "濱田広宣": "×",
+          "前里元樹": "◯",
+          "松木正和": "◯"
+        },
+        "8/22": {
+          "橋戸佑介": "◯",
+          "河井彩登": "×",
+          "大串洋尚": "△",
+          "塚原匡祐": "◯",
+          "国沢剛": "◯",
+          "岸下和樹": "△",
+          "堀本和幸": "×",
+          "濱田広宣": "×",
+          "前里元樹": "◯",
+          "松木正和": "◯"
+        },
+        "8/23": {
+          "橋戸佑介": "◯",
+          "河井彩登": "×",
+          "大串洋尚": "◯",
+          "塚原匡祐": "◯",
+          "国沢剛": "◯",
+          "岸下和樹": "△",
+          "堀本和幸": "△",
+          "濱田広宣": "◯",
+          "前里元樹": "△",
+          "松木正和": "◯"
+        },
+        "8/29": {
+          "橋戸佑介": "◯",
+          "河井彩登": "×",
+          "大串洋尚": "△",
+          "塚原匡祐": "◯",
+          "国沢剛": "◯",
+          "岸下和樹": "△",
+          "堀本和幸": "◯",
+          "濱田広宣": "◯",
+          "前里元樹": "◯",
+          "松木正和": "◯"
+        },
+        "8/30": {
+          "橋戸佑介": "◯",
+          "河井彩登": "×",
+          "大串洋尚": "◯",
+          "塚原匡祐": "◯",
+          "国沢剛": "△",
+          "岸下和樹": "△",
+          "堀本和幸": "◯",
+          "濱田広宣": "◯",
+          "前里元樹": "△",
+          "松木正和": "◯"
+        }
+      },
+      "assignments": [
+        {
+          "date": "8/1",
+          "dayOfWeek": "土",
+          "coach": null,
+          "videoCoach": "濱田広宣",
+          "kagoCoach": "塚原匡祐",
+          "practiceTime": "13:40-16:40",
+          "isSaturday": true,
+          "isMatch": false,
+          "kagoCarriedByParking": false,
+          "kagoNeedsConfirm": false,
+          "kagoHolder": "塚原匡祐"
+        },
+        {
+          "date": "8/2",
+          "dayOfWeek": "日",
+          "coach": "国沢剛",
+          "videoCoach": "堀本和幸",
+          "kagoCoach": "濱田広宣",
+          "practiceTime": "13:00-14:20",
+          "isSaturday": false,
+          "isMatch": false,
+          "kagoCarriedByParking": false,
+          "kagoNeedsConfirm": false,
+          "kagoHolder": "濱田広宣"
+        },
+        {
+          "date": "8/8",
+          "dayOfWeek": "土",
+          "coach": null,
+          "videoCoach": "国沢剛",
+          "kagoCoach": "堀本和幸",
+          "practiceTime": "13:40-16:40",
+          "isSaturday": true,
+          "isMatch": false,
+          "kagoCarriedByParking": false,
+          "kagoNeedsConfirm": false,
+          "kagoHolder": "堀本和幸"
+        },
+        {
+          "date": "8/9",
+          "dayOfWeek": "日",
+          "coach": "橋戸佑介",
+          "videoCoach": "岸下和樹",
+          "kagoCoach": "国沢剛",
+          "practiceTime": "10:45-12:00",
+          "isSaturday": false,
+          "isMatch": false,
+          "kagoCarriedByParking": false,
+          "kagoNeedsConfirm": false,
+          "kagoHolder": "国沢剛"
+        },
+        {
+          "date": "8/11",
+          "dayOfWeek": "火",
+          "coach": "前里元樹",
+          "videoCoach": "大串洋尚",
+          "kagoCoach": "岸下和樹",
+          "practiceTime": "10:45-12:00",
+          "isSaturday": false,
+          "isMatch": false,
+          "kagoCarriedByParking": false,
+          "kagoNeedsConfirm": false,
+          "kagoHolder": "岸下和樹"
+        },
+        {
+          "date": "8/22",
+          "dayOfWeek": "土",
+          "coach": null,
+          "videoCoach": "橋戸佑介",
+          "kagoCoach": "前里元樹",
+          "practiceTime": "13:40-16:40",
+          "isSaturday": true,
+          "isMatch": false,
+          "kagoCarriedByParking": false,
+          "kagoNeedsConfirm": false,
+          "kagoHolder": "前里元樹"
+        },
+        {
+          "date": "8/23",
+          "dayOfWeek": "日",
+          "coach": "大串洋尚",
+          "videoCoach": "濱田広宣",
+          "kagoCoach": "橋戸佑介",
+          "practiceTime": "9:00-10:35",
+          "isSaturday": false,
+          "isMatch": false,
+          "kagoCarriedByParking": false,
+          "kagoNeedsConfirm": false,
+          "kagoHolder": "橋戸佑介"
+        },
+        {
+          "date": "8/29",
+          "dayOfWeek": "土",
+          "coach": null,
+          "videoCoach": "堀本和幸",
+          "kagoCoach": "濱田広宣",
+          "practiceTime": "13:40-16:40",
+          "isSaturday": true,
+          "isMatch": false,
+          "kagoCarriedByParking": false,
+          "kagoNeedsConfirm": false,
+          "kagoHolder": "濱田広宣"
+        },
+        {
+          "date": "8/30",
+          "dayOfWeek": "日",
+          "coach": "塚原匡祐",
+          "videoCoach": "松木正和",
+          "kagoCoach": "塚原匡祐",
+          "practiceTime": "10:45-12:00",
+          "isSaturday": false,
+          "isMatch": false,
+          "kagoCarriedByParking": true,
+          "kagoNeedsConfirm": false,
+          "kagoHolder": "塚原匡祐"
+        }
+      ],
+      "confirmed": true
     }
   },
   "schedule": [
@@ -1382,19 +1755,19 @@
       "date": "8/2",
       "dayOfWeek": "日",
       "type": "practice",
-      "practiceTime": "13:00-16:40"
+      "practiceTime": "13:00-14:20"
     },
     {
       "date": "8/9",
       "dayOfWeek": "日",
       "type": "practice",
-      "practiceTime": "13:00-16:40"
+      "practiceTime": "10:45-12:00"
     },
     {
       "date": "8/11",
       "dayOfWeek": "祝",
       "type": "practice",
-      "practiceTime": "13:00-16:40"
+      "practiceTime": "10:45-12:00"
     },
     {
       "date": "8/16",
@@ -1406,13 +1779,13 @@
       "date": "8/23",
       "dayOfWeek": "日",
       "type": "practice",
-      "practiceTime": "13:00-16:40"
+      "practiceTime": "9:00-10:35"
     },
     {
       "date": "8/30",
       "dayOfWeek": "日",
       "type": "practice",
-      "practiceTime": "13:00-16:40"
+      "practiceTime": "10:45-12:00"
     },
     {
       "date": "9/6",
@@ -1667,5 +2040,5 @@
       "practiceTime": "13:00-16:40"
     }
   ],
-  "updatedAt": "2026-07-05T05:30:40.038Z"
+  "updatedAt": "2026-07-25T22:32:41.325Z"
 }
