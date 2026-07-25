@@ -5,7 +5,7 @@ import { assignDuties, assignKagoChain } from '../lib/assignParking';
 import type { AssignmentResult } from '../lib/assignParking';
 import type { ParsedCsvData } from '../lib/parseCsv';
 import {
-  getMonthlyData, saveMonthlyData,
+  getMonthlyData, getAllMonthlyData, saveMonthlyData,
   getCountsForAssignment, getPreviousLastCoach, getPreviousKagoSession,
   getParkingCounts, getVideoCounts, getKagoCounts, recalculateCumulativeCounts,
   getSchedule, saveSchedule,
@@ -64,6 +64,15 @@ const AdminView: React.FC = () => {
     void refreshKey;
     return getMonthlyData(selectedMonth);
   }, [selectedMonth, refreshKey]);
+
+  // 翌月（同年度内）の確定済み割り当て。月末カゴ日の持ち帰り先を実際の担当者へ解決するのに使う
+  const nextMonthAssignments = useMemo(() => {
+    void refreshKey;
+    const nextIdx = selectedMonthIdx + 1;
+    if (nextIdx >= MONTHS.length) return undefined; // 3月の次は翌年度＝対象外
+    const nd = getAllMonthlyData()[MONTHS[nextIdx]];
+    return nd?.confirmed && nd.assignments.length > 0 ? nd.assignments : undefined;
+  }, [selectedMonthIdx, refreshKey]);
 
   // スケジュール（保存済みまたはデフォルト。refreshKey は上と同じ再計算トリガー）
   const currentSchedule = useMemo(() => {
@@ -286,11 +295,13 @@ const AdminView: React.FC = () => {
                 results={displayAssignments.assignments}
                 month={selectedMonth}
                 onUpdate={handleResultUpdate}
+                nextMonthAssignments={nextMonthAssignments}
               />
 
               <LineAnnouncement
                 results={displayAssignments.assignments}
                 month={selectedMonth}
+                nextMonthAssignments={nextMonthAssignments}
               />
 
               <CumulativeCount

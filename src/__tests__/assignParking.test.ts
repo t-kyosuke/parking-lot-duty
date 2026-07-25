@@ -413,6 +413,48 @@ describe('computeKagoTakeHome（その日の練習後に持ち帰る人＝次の
     expect(th['4/5']).toBeUndefined();                // カゴ担当のいない練習日はエントリ無し＝カゴ行を出さない
     expect(th['4/29']).toBeUndefined();
   });
+
+  it('月末カゴ日：翌月が確定していれば、その最初のカゴ日の担当者が持ち帰り先になる（並び順不同でも最初の日を採用）', () => {
+    const july = [mk('7/4', '塚原匡祐'), mk('7/26', '松木正和')];
+    const august = [mk('8/9', '堀本和幸'), mk('8/2', '国沢剛')]; // 8/2が最初
+    const th = computeKagoTakeHome(july, august);
+    expect(th['7/26'].carryToNextMonth).toBe(false);
+    expect(th['7/26'].coach).toBe('国沢剛');   // 8/2にカゴを持ってくる人＝7/26の練習後に持ち帰る人
+    expect(th['7/4'].coach).toBe('松木正和');   // 月内の日は翌月の影響を受けない
+  });
+
+  it('月末カゴ日：翌月の最初のカゴ日が要確認なら needsConfirm＝true・今の保持者を holder に返す', () => {
+    const july = [mk('7/26', '松木正和')];
+    const august = [mk('8/2', null, { kagoNeedsConfirm: true, kagoHolder: '松木正和' })];
+    const th = computeKagoTakeHome(july, august);
+    expect(th['7/26'].needsConfirm).toBe(true);
+    expect(th['7/26'].coach).toBeNull();
+    expect(th['7/26'].holder).toBe('松木正和');    // 7/26の担当がカゴを持ったまま翌月へ
+    expect(th['7/26'].carryToNextMonth).toBe(false);
+  });
+
+  it('月末カゴ日：翌月の最初が駐車場当番のそのまま運ぶ日でも、その人が持ち帰り先になる', () => {
+    const july = [mk('7/26', '松木正和')];
+    const august = [mk('8/2', '国沢剛', { coach: '国沢剛', kagoCarriedByParking: true })];
+    const th = computeKagoTakeHome(july, august);
+    expect(th['7/26'].coach).toBe('国沢剛');
+    expect(th['7/26'].carryToNextMonth).toBe(false);
+  });
+
+  it('翌月がまだ無い（空配列／未指定）ときは従来どおり「翌月へ引き継ぎ」', () => {
+    const july = [mk('7/4', '塚原匡祐'), mk('7/26', '松木正和')];
+    expect(computeKagoTakeHome(july, [])['7/26'].carryToNextMonth).toBe(true);
+    expect(computeKagoTakeHome(july)['7/26'].carryToNextMonth).toBe(true);
+  });
+
+  it('翌月が旧フォーマット（新フラグ無し）のときは月またぎ解決をせず「翌月へ引き継ぎ」', () => {
+    const july = [mk('7/26', '松木正和')];
+    const legacyAug: AssignmentResult[] = [
+      { date: '8/2', dayOfWeek: '日', coach: null, videoCoach: null, kagoCoach: '国沢剛', practiceTime: '', isSaturday: false, isMatch: true },
+    ];
+    const th = computeKagoTakeHome(july, legacyAug);
+    expect(th['7/26'].carryToNextMonth).toBe(true);
+  });
 });
 
 describe('カゴ公平性シミュレーション（1年・出席80%・構造的な偏りあり）', () => {

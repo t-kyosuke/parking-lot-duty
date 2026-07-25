@@ -43,7 +43,10 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
   const localAllData = useMemo(() => getAllMonthlyData(), []);
   const localSchedule = useMemo(() => getSchedule(), []);
   const hasLocalData = Object.keys(localAllData).length > 0;
-  const allData = hasLocalData ? localAllData : (remoteAllData ?? {});
+  const allData = useMemo(
+    () => (hasLocalData ? localAllData : (remoteAllData ?? {})),
+    [hasLocalData, localAllData, remoteAllData],
+  );
   const monthData = allData[selectedMonth];
   const savedSchedule = useMemo(
     () => (hasLocalData ? localSchedule : (remoteSchedule ?? [])),
@@ -75,10 +78,18 @@ const PublicView: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) =>
   // 割り当てデータがあるか
   const hasAssignments = monthData?.confirmed && monthData.assignments.length > 0;
 
-  // 各カゴ利用日の「その日の練習後に持ち帰る人」（＝次のカゴ利用日の担当者）
+  // 翌月（同年度内）の確定済み割り当て。月末カゴ日の「翌月へ引き継ぎ」を実際の持ち帰り先へ解決するのに使う
+  const nextMonthAssignments = useMemo(() => {
+    const nextIdx = selectedMonthIdx + 1;
+    if (nextIdx >= MONTHS.length) return undefined; // 3月の次は翌年度＝対象外
+    const nd = allData[MONTHS[nextIdx]];
+    return nd?.confirmed && nd.assignments.length > 0 ? nd.assignments : undefined;
+  }, [selectedMonthIdx, allData]);
+
+  // 各カゴ利用日の「その日の練習後に持ち帰る人」（＝次のカゴ利用日の担当者。月末は翌月最初の担当者）
   const kagoTakeHome = useMemo(
-    () => (hasAssignments ? computeKagoTakeHome(monthData!.assignments) : {}),
-    [hasAssignments, monthData],
+    () => (hasAssignments ? computeKagoTakeHome(monthData!.assignments, nextMonthAssignments) : {}),
+    [hasAssignments, monthData, nextMonthAssignments],
   );
 
   return (

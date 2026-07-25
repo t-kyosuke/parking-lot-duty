@@ -6,9 +6,10 @@ import type { AssignmentResult } from '../lib/assignParking';
 interface LineAnnouncementProps {
   results: AssignmentResult[];
   month: string;
+  nextMonthAssignments?: AssignmentResult[]; // 翌月確定分（月末カゴ日の持ち帰り先を解決するため）
 }
 
-const LineAnnouncement: React.FC<LineAnnouncementProps> = ({ results, month }) => {
+const LineAnnouncement: React.FC<LineAnnouncementProps> = ({ results, month, nextMonthAssignments }) => {
   const [copied, setCopied] = useState(false);
 
   const monthNum = month.replace('月', '');
@@ -17,8 +18,8 @@ const LineAnnouncement: React.FC<LineAnnouncementProps> = ({ results, month }) =
   // 試合日(isMatch)はカゴが未定でも必ず出す（結果・閲覧画面と揃える）
   const assignedDays = results.filter(r => r.coach || r.videoCoach || r.kagoCoach || r.isMatch || r.kagoNeedsConfirm);
 
-  // 各カゴ利用日の「その日の練習後にカゴを持ち帰る人」（＝次のカゴ利用日の担当者）
-  const takeHomeMap = computeKagoTakeHome(results);
+  // 各カゴ利用日の「その日の練習後にカゴを持ち帰る人」（＝次のカゴ利用日の担当者。月末は翌月最初の担当者）
+  const takeHomeMap = computeKagoTakeHome(results, nextMonthAssignments);
 
   // カゴ行に出す文字（＝その日の練習後に持ち帰る人）
   const kagoText = (r: AssignmentResult): string | null => {

@@ -5,6 +5,7 @@
 
 | 日付 | 変更内容 | 主なコミット/タグ |
 |------|------|------|
+| 2026-07-26 | カゴ持ち帰り表示の月またぎ対応：月末のカゴ利用日は、翌月が確定していれば翌月最初のカゴ担当者を持ち帰り先として表示（未確定なら従来どおり「翌月へ引き継ぎ」）。`computeKagoTakeHome` に翌月引数を追加・**表示のみ**（公平性ロジック未変更）。テスト5件追加（計62件） | （本セッション） |
 | 2026-07-05 | 引き継ぎドキュメント整備：HANDOFF.md／CHANGELOG_AI.md／NEXT_PROMPT.md 新設、NEXT_ACTIONS.md 再構成、CLAUDE.md／README.md／RESTART.md 更新。**コード変更なし** | （本セッション） |
 | 2026-07-05 | B-1〜B-5：lint 9件→0件（LINE全角スペースは意図的と明示）・未使用 `public/data.json` 削除・管理画面の当月初期選択・CI Node24＋Actions部品最新化・GitHub連携を `github.ts` へ分離 | `eaed5aa`・`1f829fe` |
 | 2026-07-05 | A-3：GitHubトークンをFine-grained化（`parking-lot-duty` のContents R/Wのみ・期限2027-07-03）。旧classicトークン全削除（人間作業をAIが画面操作で補助・コード変更なし） | — |

@@ -43,10 +43,17 @@ export interface KagoTakeHome {
  *
  * - 次のカゴ利用日に担当者がいる → その人が持ち帰る
  * - 次のカゴ利用日が「要確認」 → needsConfirm（今カゴを持っている人を holder に）
- * - 月内にもう次のカゴ利用日が無い（最後の日） → carryToNextMonth（翌月へ引き継ぎ）
+ * - 月内にもう次のカゴ利用日が無い（最後の日）：
+ *     - 翌月（nextMonthAssignments）が確定していれば、その「最初のカゴ利用日」の担当者が持ち帰る
+ *       （＝月をまたいでカゴを次月へ運ぶ人。カゴは物理的なバトンなので筋が通る）
+ *     - 翌月がまだ無い／旧フォーマットのとき → carryToNextMonth（翌月へ引き継ぎ）
+ *
+ * @param assignments          対象月のカゴ必要セッション（練習・運動会等・試合）
+ * @param nextMonthAssignments 翌月の確定済み割り当て（省略可）。渡すと最終日の持ち帰り先を解決する
  */
 export function computeKagoTakeHome(
   assignments: AssignmentResult[],
+  nextMonthAssignments?: AssignmentResult[],
 ): Record<string, KagoTakeHome> {
   // 旧フォーマット（カゴ連鎖導入=2026-06-22 より前に確定した月）は
   // kagoCarriedByParking / kagoNeedsConfirm フラグを一切持たない（練習日は kagoCoach=null・
@@ -71,9 +78,22 @@ export function computeKagoTakeHome(
   };
   const sorted = [...assignments].sort((a, b) => toNum(a.date) - toNum(b.date));
 
+  // 月またぎの持ち帰り先：翌月の「最初のカゴ利用日」の担当者＝この月の最終カゴ日にカゴを持ち帰る人。
+  // 翌月が未確定／旧フォーマット（新フラグ無し）なら undefined＝従来どおり「翌月へ引き継ぎ」にフォールバック。
+  let nextMonthFirst: AssignmentResult | undefined;
+  if (nextMonthAssignments && nextMonthAssignments.length > 0) {
+    const nextIsNewFormat = nextMonthAssignments.some(
+      (a) => a.kagoCarriedByParking !== undefined || a.kagoNeedsConfirm !== undefined,
+    );
+    if (nextIsNewFormat) {
+      nextMonthFirst = [...nextMonthAssignments].sort((a, b) => toNum(a.date) - toNum(b.date))[0];
+    }
+  }
+
   const map: Record<string, KagoTakeHome> = {};
   for (let i = 0; i < sorted.length; i++) {
-    const next = sorted[i + 1];
+    // 月内に次のカゴ利用日があればそれ、無ければ翌月の最初のカゴ利用日を「次」とみなす
+    const next = sorted[i + 1] ?? nextMonthFirst;
     if (!next) {
       map[sorted[i].date] = { coach: null, needsConfirm: false, holder: null, carryToNextMonth: true };
     } else if (next.kagoNeedsConfirm) {

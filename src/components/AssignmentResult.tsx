@@ -8,14 +8,15 @@ interface AssignmentResultProps {
   results: AssignmentResult[];
   month: string;
   onUpdate: (results: AssignmentResult[]) => void;
+  nextMonthAssignments?: AssignmentResult[]; // 翌月確定分（月末カゴ日の持ち帰り先を解決するため）
 }
 
-const AssignmentResultView: React.FC<AssignmentResultProps> = ({ results, month, onUpdate }) => {
+const AssignmentResultView: React.FC<AssignmentResultProps> = ({ results, month, onUpdate, nextMonthAssignments }) => {
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editingField, setEditingField] = useState<'parking' | 'video' | 'kago' | null>(null);
 
-  // 各カゴ利用日の「その日の練習後に持ち帰る人」（＝次のカゴ利用日の担当者）
-  const takeHomeMap = computeKagoTakeHome(results);
+  // 各カゴ利用日の「その日の練習後に持ち帰る人」（＝次のカゴ利用日の担当者。月末は翌月最初の担当者）
+  const takeHomeMap = computeKagoTakeHome(results, nextMonthAssignments);
 
   // 「→終わりに ◯◯さん が持ち帰り」の補足テキスト（無ければ null）
   const takeHomeHint = (r: AssignmentResult): string | null => {
