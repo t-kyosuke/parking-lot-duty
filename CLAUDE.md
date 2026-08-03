@@ -64,6 +64,7 @@ npm run lint     # 指摘0件が正常（LINE用全角スペースは意図的�
 | `docs/ai/CHANGELOG_AI.md` | AI変更履歴の要約（詳細な経緯は PROGRESS.md） |
 | `docs/ai/YEAR_ROLLOVER.md` | 2027年度更新の手順書（2027年2〜3月に実施） |
 | `docs/GITHUB_TOKEN_GUIDE.md` | GitHubトークン再発行手順（2027年7月の期限切れ時） |
+| `docs/DUTY_TROUBLE_GUIDE.md` | ★当番の困ったとき（練習中止・急な欠席）owner向け手順書（2026-08-03） |
 | `docs/ai/FABLE_REVIEW.md` | 初回全体レビュー（2026-07-02。指摘S/A/Bは全対応済み＝当時の記録） |
 | `PROGRESS.md` / `tasks/lessons.md` | セッション記録／学んだことルール |
 
