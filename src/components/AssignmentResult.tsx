@@ -13,10 +13,26 @@ interface AssignmentResultProps {
 
 const AssignmentResultView: React.FC<AssignmentResultProps> = ({ results, month, onUpdate, nextMonthAssignments }) => {
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
-  const [editingField, setEditingField] = useState<'parking' | 'video' | 'kago' | null>(null);
+  const [editingField, setEditingField] = useState<'parking' | 'video' | 'kago' | 'takehome' | null>(null);
 
   // 各カゴ利用日の「その日の練習後に持ち帰る人」（＝次のカゴ利用日の担当者。月末は翌月最初の担当者）
   const takeHomeMap = computeKagoTakeHome(results, nextMonthAssignments);
+
+  // 月内で「次のカゴ利用日」にあたる行の index（無ければ null＝月末。翌月分は翌月の画面で直す）。
+  // 持ち帰り人＝次のカゴ利用日の「持ってくる人」なので、持ち帰りの ✏️ はその行を書き換える
+  const toNum = (date: string): number => {
+    const [m, d] = date.split('/').map(Number);
+    return m * 100 + d;
+  };
+  const nextKagoIdx = (idx: number): number | null => {
+    const cur = toNum(results[idx].date);
+    let best: number | null = null;
+    results.forEach((a, i) => {
+      const n = toNum(a.date);
+      if (n > cur && (best === null || n < toNum(results[best].date))) best = i;
+    });
+    return best;
+  };
 
   // 「→終わりに ◯◯さん が持ち帰り」の補足テキスト（無ければ null）
   const takeHomeHint = (r: AssignmentResult): string | null => {
@@ -75,7 +91,7 @@ const AssignmentResultView: React.FC<AssignmentResultProps> = ({ results, month,
     setEditingField(null);
   };
 
-  const startEdit = (idx: number, field: 'parking' | 'video' | 'kago') => {
+  const startEdit = (idx: number, field: 'parking' | 'video' | 'kago' | 'takehome') => {
     setEditingIdx(idx);
     setEditingField(field);
   };
@@ -113,7 +129,39 @@ const AssignmentResultView: React.FC<AssignmentResultProps> = ({ results, month,
         </>
       )}
     </div>
-    {takeHomeHint(r) && <div className="kago-takehome-hint">{takeHomeHint(r)}</div>}
+    {takeHomeHint(r) && (() => {
+      const nextIdx = takeHomeMap[r.date]?.carryToNextMonth ? null : nextKagoIdx(idx);
+      if (editingIdx === idx && editingField === 'takehome' && nextIdx !== null) {
+        return (
+          <div className="kago-takehome-hint">
+            →終わりに{' '}
+            <select
+              className="coach-select"
+              value={results[nextIdx].kagoCoach || ''}
+              onChange={(e) => handleChange(nextIdx, 'kago', e.target.value)}
+              onBlur={() => { setEditingIdx(null); setEditingField(null); }}
+              autoFocus
+            >
+              <option value="">（未定）</option>
+              {KAGO_COACH_ORDER.map(coach => (
+                <option key={coach} value={coach}>
+                  {COACH_LAST_NAMES[coach]}さん
+                </option>
+              ))}
+            </select>
+            {' '}が持ち帰り（{results[nextIdx].date}に持ってくる人も同じ人になります）
+          </div>
+        );
+      }
+      return (
+        <div className="kago-takehome-hint">
+          {takeHomeHint(r)}
+          {nextIdx !== null && (
+            <button className="btn btn-xs btn-ghost" onClick={() => startEdit(idx, 'takehome')}>✏️</button>
+          )}
+        </div>
+      );
+    })()}
     </>
   );
 
