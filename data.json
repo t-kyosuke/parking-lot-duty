@@ -2278,7 +2278,7 @@
           "dayOfWeek": "日",
           "coach": "橋戸佑介",
           "videoCoach": "橋戸佑介",
-          "kagoCoach": "堀本和幸",
+          "kagoCoach": "塚原匡祐",
           "practiceTime": "9:00-10:35",
           "isSaturday": false,
           "isMatch": false,
@@ -2719,5 +2719,5 @@
       "practiceTime": "13:00-16:40"
     }
   ],
-  "updatedAt": "2026-09-27T04:42:26.378Z"
+  "updatedAt": "2026-09-27T04:47:08.590Z"
 }
