@@ -1834,7 +1834,7 @@
           "date": "9/12",
           "dayOfWeek": "土",
           "coach": null,
-          "videoCoach": "前里元樹",
+          "videoCoach": "堀本和幸",
           "kagoCoach": "松木正和",
           "practiceTime": "13:40-16:40",
           "isSaturday": true,
@@ -1873,8 +1873,8 @@
           "date": "9/26",
           "dayOfWeek": "土",
           "coach": null,
-          "videoCoach": "堀本和幸",
-          "kagoCoach": "前里元樹",
+          "videoCoach": null,
+          "kagoCoach": null,
           "practiceTime": "13:40-16:40",
           "isSaturday": true,
           "isMatch": false,
@@ -1886,8 +1886,8 @@
           "date": "9/27",
           "dayOfWeek": "日",
           "coach": "河井彩登",
-          "videoCoach": "大串洋尚",
-          "kagoCoach": "堀本和幸",
+          "videoCoach": "松木正和",
+          "kagoCoach": null,
           "practiceTime": "9:00-10:35",
           "isSaturday": false,
           "isMatch": false,
@@ -2315,5 +2315,5 @@
       "practiceTime": "13:00-16:40"
     }
   ],
-  "updatedAt": "2026-08-31T01:26:48.481Z"
+  "updatedAt": "2026-09-27T04:32:57.760Z"
 }
